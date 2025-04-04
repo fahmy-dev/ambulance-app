@@ -71,7 +71,7 @@ This project is an Ambulance Request App that connects patients with nearby hosp
 
 5. Set up and run the React client with Vite:
    ```bash
-   cd ../client
+   cd client/
    npm install
    npm run dev
    ```

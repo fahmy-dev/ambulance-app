@@ -69,8 +69,14 @@ This project is an Ambulance Request App that connects patients with nearby hosp
    ```
    The server will start on http://localhost:5555
 
-5. /////
-   - ////////
+5. Set up and run the React client with Vite:
+   ```bash
+   cd ../client
+   npm install
+   npm run dev
+   ```
+   The server will start on http://localhost:5173
+
 
 ## API Endpoints
 

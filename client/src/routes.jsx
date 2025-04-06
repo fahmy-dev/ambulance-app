@@ -1,8 +1,9 @@
 import { Navigate } from "react-router-dom";
 import Home from "./pages/Home";
-import About from "./pages/About";
-import Login from "./pages/Login";
-import Requests from "./pages/Requests";
+import ContactUs from "./pages/ContactUs";
+import Auth from "./pages/Auth";
+import MyRequests from "./pages/MyRequests";
+
 
 const routes = [
   {
@@ -14,18 +15,17 @@ const routes = [
     element: <Home />
   },
   {
-    path: "/about",
-    element: <About />
+    path: "/contact",
+    element: <ContactUs />
   },
   {
-    path: "/login",
-    element: <Login />
+    path: "/auth",
+    element: <Auth />
   },
   {
-    path: "/requests",
-    element: <Requests />
-  },
-
+    path: "/my-requests",
+    element: <MyRequests />
+  }
 ]
 
 export default routes

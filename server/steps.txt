@@ -1,0 +1,22 @@
+importations
+models
+    -user
+        id , name, email(unique), location, password_hash
+    -ambulance
+        id, vehicle_no, driver_name, driver_contact, is_available(boolean), current_location, hospital_id
+    -hospital
+        id, name, location, availability(boolean), contact_info
+    -ride history
+        id, user_id, request_id, note, timestamp
+    -driver 
+        id, name, contact, availability
+    -ambulance_request
+        id, user_id,hospital_id, ambulance_id, user_location, timestamp, status (Enum: "Pending", "Gearing Up", "Dispatched", "En Route", "Arrived", "Completed", "Cancelled"), payment_method(m-pesa/cash)
+    -live location
+
+relationships
+    user-request(one-many)
+    hospital-request(one-many)
+    ambulance-request(one-many)
+    hospital-ambulance(one-many)
+    driver-ambulance(many-many)

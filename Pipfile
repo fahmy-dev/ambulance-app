@@ -12,6 +12,7 @@ sqlalchemy = "*"
 werkzeug = "*"
 psycopg2-binary = "*"
 python-dotenv = "*"
+sqlalchemy-serializer = "*"
 
 [dev-packages]
 pytest = "*"

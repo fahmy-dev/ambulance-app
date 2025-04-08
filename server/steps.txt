@@ -20,3 +20,130 @@ relationships
     ambulance-request(one-many)
     hospital-ambulance(one-many)
     driver-ambulance(many-many)
+
+added serializer rules and to_dict in every model
+
+creating routes
+    🔹 USERS
+        ✅ Create User
+        POST /users
+            json
+            {
+            "name": "Joy Mutanu",
+            "email": "joy@example.com",
+            "location_lat": -1.2921,
+            "location_lng": 36.8219
+            }
+        ✅ Get All Users
+        GET /users
+
+    🔹 DRIVERS
+        ✅ Create Driver
+        POST /drivers
+            json
+            {
+            "name": "James Kamau",
+            "contact": "0712345678",
+            "license_number": "DL12345678"
+            }
+        ✅ Get All Drivers
+        GET /drivers
+
+        ✅ Update Driver
+        PATCH /drivers/1
+            json
+            {
+            "is_available": false
+            }
+        ✅ Delete Driver
+        DELETE /drivers/1
+
+    🔹 HOSPITALS
+        ✅ Create Hospital
+        POST /hospitals
+            json
+            {
+            "name": "Nairobi Hospital",
+            "location_lat": -1.3000,
+            "location_lng": 36.8000,
+            "contact_info": "0722555123"
+            }
+        ✅ Get All Hospitals
+        GET /hospitals
+
+        ✅ Update Hospital
+        PATCH /hospitals/1
+            json
+            {
+            "availability": false
+            }
+        ✅ Delete Hospital
+        DELETE /hospitals/1
+
+    🔹 AMBULANCES
+        ✅ Create Ambulance
+        POST /ambulances
+            json
+            {
+            "vehicle_no": "KDA 456A",
+            "location_lat": -1.2950,
+            "location_lng": 36.8200,
+            "hospital_id": 1
+            }
+        ✅ Get All Ambulances
+        GET /ambulances
+
+    🔹 AMBULANCE REQUESTS
+        ✅ Create Request
+        POST /requests
+            json
+            {
+            "patient_id": 1,
+            "hospital_id": 1,
+            "ambulance_id": 1,
+            "patient_location_lat": -1.2900,
+            "patient_location_lng": 36.8222,
+            "payment_method": "M-Pesa",
+            "estimated_cost": 5000,
+            "status": "Pending"
+            }
+        ✅ Get All Requests
+        GET /requests
+
+        ✅ Update Request
+        PATCH /requests/1
+            json
+            {
+            "status": "Completed"
+            }
+        ✅ Delete Request
+        DELETE /requests/1
+
+    🔹 RIDE HISTORY
+        ✅ Create Ride History
+        POST /ride_history
+            json
+            {
+            "request_id": 1,
+            "patient_id": 1,
+            "hospital_id": 1,
+            "ambulance_id": 1,
+            "driver_id": 1,
+            "start_time": "2025-04-08 14:00:00",
+            "end_time": "2025-04-08 14:30:00",
+            "total_duration": "30 mins",
+            "total_cost": 5000,
+            "payment_method": "M-Pesa",
+            "rating": 5,
+            "feedback": "Excellent service!"
+            }
+        ✅ Get All Ride Histories
+        GET /ride_history
+
+
+
+http request         body        status code     parameters
+post                     ✅          ✅                  ✅ 
+PATCH                    ✅             ✅               ✅ 
+DELETE                  X              ✅                ✅ 
+GET                     X               ✅                  ✅ 

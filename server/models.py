@@ -14,11 +14,12 @@ driver_ambulance = db.Table('driver_ambulance_assignments',
     db.Column('ambulance_id', db.Integer, db.ForeignKey('ambulance.id'), primary_key=True),
 )
 
-# Enum for status of AmbulanceRequest
 
 class User(db.Model, SerializerMixin):
     __tablename__ = 'user'
     
+    serialize_rules = ('-requests.patient', '-ride_histories.patient',)
+
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(100), unique=True, nullable=False)
@@ -28,12 +29,18 @@ class User(db.Model, SerializerMixin):
     requests = db.relationship('AmbulanceRequest', back_populates='patient')
     ride_histories = db.relationship('RideHistory', back_populates='patient')
 
-
-    def __repr__(self):
-        return f"<User {self.name}>"
-
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "email": self.email,
+            "location_lat": self.location_lat,
+            "location_lng": self.location_lng
+        }
 
 class Driver(db.Model, SerializerMixin):
+    serialize_rules = ('-ride_histories.driver', '-ambulances.drivers',)
+
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     contact = db.Column(db.String(100), unique=True, nullable=False)
@@ -43,11 +50,18 @@ class Driver(db.Model, SerializerMixin):
     ride_histories = db.relationship('RideHistory', back_populates='driver')
     ambulances = db.relationship('Ambulance', secondary=driver_ambulance, back_populates='drivers')
 
-    def __repr__(self):
-        return f"<Driver {self.name}>"
-
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "contact": self.contact,
+            "is_available": self.is_available,
+            "license_number": self.license_number
+        }
 
 class Hospital(db.Model, SerializerMixin):
+    serialize_rules = ('-ambulances.hospital', '-requests.hospital', '-ride_histories.hospital',)
+
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100))
     location_lat = db.Column(db.Float)
@@ -59,11 +73,18 @@ class Hospital(db.Model, SerializerMixin):
     requests = db.relationship('AmbulanceRequest', back_populates='hospital')
     ride_histories = db.relationship('RideHistory', back_populates='hospital')
 
-    def __repr__(self):
-        return f"<Hospital {self.name}>"
-
-
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "location_lat": self.location_lat,
+            "location_lng": self.location_lng,
+            "availability": self.availability,
+            "contact_info": self.contact_info
+        }
 class Ambulance(db.Model, SerializerMixin):
+    serialize_rules = ('-hospital.ambulances', '-requests.ambulance', '-ride_histories.ambulance', '-drivers.ambulances',)
+
     id = db.Column(db.Integer, primary_key=True)
     vehicle_no = db.Column(db.String(100), nullable=False)
     is_available = db.Column(db.Boolean, default=True)
@@ -77,10 +98,19 @@ class Ambulance(db.Model, SerializerMixin):
     ride_histories = db.relationship('RideHistory', back_populates='ambulance')
     drivers = db.relationship('Driver', secondary=driver_ambulance, back_populates='ambulances')
 
-    def __repr__(self):
-        return f"<Ambulance {self.vehicle_no}>"
 
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "vehicle_no": self.vehicle_no,
+            "is_available": self.is_available,
+            "location_lat": self.location_lat,
+            "location_lng": self.location_lng,
+            "hospital_id": self.hospital_id
+        }
 class AmbulanceRequest(db.Model, SerializerMixin):
+    serialize_rules = ('-patient.requests', '-hospital.requests', '-ambulance.requests', '-ride_history.request',)
+
     id = db.Column(db.Integer, primary_key=True)
     patient_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     hospital_id = db.Column(db.Integer, db.ForeignKey('hospital.id'), nullable=False)
@@ -98,11 +128,23 @@ class AmbulanceRequest(db.Model, SerializerMixin):
     ambulance = db.relationship('Ambulance', back_populates='requests')
     ride_history = db.relationship('RideHistory', uselist=False, back_populates='request')
 
-    def __repr__(self):
-        return f"<Request {self.id} - Status: {self.status}>"
 
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "patient_id": self.patient_id,
+            "hospital_id": self.hospital_id,
+            "ambulance_id": self.ambulance_id,
+            "patient_location_lat": self.patient_location_lat,
+            "patient_location_lng": self.patient_location_lng,
+            "payment_method": self.payment_method,
+            "estimated_cost": self.estimated_cost,
+            "status": self.status
+        }
 
 class RideHistory(db.Model, SerializerMixin):
+    serialize_rules = ('-patient.ride_histories', '-hospital.ride_histories', '-ambulance.ride_histories', '-driver.ride_histories', '-request.ride_history',)
+
     id = db.Column(db.Integer, primary_key=True)
     request_id = db.Column(db.Integer, db.ForeignKey('ambulance_request.id'), nullable=False, unique=True)
     patient_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
@@ -125,5 +167,19 @@ class RideHistory(db.Model, SerializerMixin):
     ambulance = db.relationship('Ambulance', back_populates='ride_histories')
     driver = db.relationship('Driver', back_populates='ride_histories')
 
-    def __repr__(self):
-        return f"<RideHistory RequestID {self.request_id}>"
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "request_id": self.request_id,
+            "patient_id": self.patient_id,
+            "hospital_id": self.hospital_id,
+            "ambulance_id": self.ambulance_id,
+            "driver_id": self.driver_id,
+            "start_time": self.start_time.isoformat() if self.start_time else None,
+            "end_time": self.end_time.isoformat() if self.end_time else None,
+            "total_duration": self.total_duration,
+            "total_cost": self.total_cost,
+            "payment_method": self.payment_method,
+            "rating": self.rating,
+            "feedback": self.feedback
+        }

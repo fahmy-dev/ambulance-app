@@ -1,131 +1,329 @@
-/* Simple CSS for Ambulance App */
 * {
-  box-sizing: border-box;
   margin: 0;
   padding: 0;
-  font-family: Arial, sans-serif;
+  box-sizing: border-box;
+  font-family: 'Arial', sans-serif;
 }
 
 body {
-  background-color: #f8f9fa;
+  background-color: #f4f4f4;
   color: #333;
-  line-height: 1.6;
+  min-height: 100vh;
+  display: block;
 }
 
-.container {
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Layout Containers */
+.home, .page-container, .my-requests-page {
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
 }
 
-/* Navigation */
-.navbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background-color: #dc3545;
-  color: white;
-  padding: 15px 20px;
+.contact-page, .auth-page {
+  max-width: 600px;
+  margin: 20px auto;
+  padding: 30px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
-.navbar a {
-  color: white;
-  text-decoration: none;
-  margin-left: 15px;
+.auth-page {
+  max-width: 500px;
 }
 
-/* Home Page */
-.map-container {
-  height: 400px;
-  background-color: #e9ecef;
-  border-radius: 5px;
-  margin: 20px 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.request-form {
-  background-color: white;
-  padding: 20px;
-  border-radius: 5px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  margin-bottom: 20px;
-}
-
-.btn {
-  display: inline-block;
-  background-color: #dc3545;
-  color: white;
-  padding: 10px 15px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  text-decoration: none;
-}
-
-.btn:hover {
-  background-color: #c82333;
-}
-
-input, select {
-  width: 100%;
-  padding: 10px;
-  margin-bottom: 15px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-}
-
-/* Status Page */
-.status-card {
-  background-color: white;
-  padding: 20px;
-  border-radius: 5px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  margin-bottom: 20px;
-}
-
-.status-steps {
-  display: flex;
-  justify-content: space-between;
-  margin: 30px 0;
-}
-
-.step {
+/* Typography */
+h1, .page-title, .contact-title {
   text-align: center;
-  position: relative;
+  font-size: 2.5rem;
+  margin: 20px 0;
+  font-weight: 600;
 }
 
-.step.active {
-  color: #dc3545;
+.page-subtitle, .contact-subtitle {
+  text-align: center;
+  color: #666;
+  margin-bottom: 30px;
+}
+
+/* Navbar */
+nav {
+  width: 100%;
+  padding: 20px 0;
+  background-color: #fff;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+nav .container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 80%;
+  margin: 0 auto;
+}
+
+nav .logo {
+  font-size: 24px;
   font-weight: bold;
 }
 
-/* Hospital Dashboard */
-.request-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+nav .nav-links {
+  display: flex;
   gap: 20px;
 }
 
-.request-item {
-  background-color: white;
-  padding: 15px;
-  border-radius: 5px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+nav .auth-buttons {
+  display: flex;
+  gap: 15px;
 }
 
-/* Responsive */
+/* Buttons */
+button, .submit-btn, .request-btn, .sign-in-btn {
+  padding: 10px 20px;
+  border-radius: 5px;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+button {
+  font-size: 14px;
+  background-color: #007bff;
+}
+
+button:hover {
+  background-color: #0056b3;
+}
+
+.submit-btn, .sign-in-btn, .request-btn {
+  width: 100%;
+  padding: 12px;
+  font-weight: bold;
+  margin-top: 15px;
+}
+
+.submit-btn, .sign-in-btn {
+  background-color: #333;
+}
+
+.submit-btn:hover, .sign-in-btn:hover {
+  background-color: #555;
+}
+
+.request-btn {
+  background-color: #e53935;
+  font-size: 16px;
+}
+
+.request-btn:hover {
+  background-color: #c62828;
+}
+
+/* Forms */
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+input, select, textarea {
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  width: 100%;
+}
+
+textarea {
+  height: 150px;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Home Page */
+.main-content {
+  display: flex;
+  gap: 30px;
+  margin: 30px auto;
+}
+
+.map-area {
+  flex: 2;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.map-placeholder {
+  width: 100%;
+  min-height: 500px;
+  background-color: #eee;
+}
+
+.loading-map {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 500px;
+  color: #666;
+}
+
+.request-panel {
+  flex: 1;
+  background-color: #fff;
+  padding: 25px;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.request-panel h2 {
+  font-size: 1.5rem;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+/* Hospital items */
+.favourite-hospitals {
+  margin: 15px 0;
+}
+
+.hospital-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.star-icon {
+  color: gold;
+  margin-right: 10px;
+}
+
+/* My Requests Table */
+.requests-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 30px;
+  background-color: #fff;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.requests-table th {
+  background-color: #f8f8f8;
+  padding: 15px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+  font-weight: 600;
+}
+
+.requests-table td {
+  padding: 15px;
+  border-bottom: 1px solid #eee;
+}
+
+.status-pending, .status-done {
+  display: inline-flex;
+  align-items: center;
+}
+
+.status-pending::before {
+  content: "";
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: #f0ad4e;
+  margin-right: 8px;
+}
+
+.status-done::before {
+  content: "✓";
+  color: #5cb85c;
+  font-weight: bold;
+  margin-right: 8px;
+}
+
+/* Auth Page */
+.auth-tabs {
+  display: flex;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.auth-tab {
+  padding: 10px 20px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+}
+
+.auth-tab.active {
+  border-bottom: 2px solid #333;
+  font-weight: 500;
+}
+
+.forgot-password {
+  display: block;
+  text-align: left;
+  margin-top: 15px;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+/* Footer */
+.app-footer {
+  text-align: center;
+  padding: 20px;
+  margin-top: 50px;
+  border-top: 1px solid #eee;
+}
+
+.social-icons {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 10px;
+}
+
+/* Responsive Styles */
 @media (max-width: 768px) {
-  .navbar {
+  .main-content {
     flex-direction: column;
   }
   
-  .navbar a {
-    margin: 5px 0;
+  nav .container {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  nav .nav-links {
+    flex-direction: column;
+    gap: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  h1, .page-title, .contact-title {
+    font-size: 2rem;
   }
   
-  .request-list {
-    grid-template-columns: 1fr;
+  .request-panel h2 {
+    font-size: 1.2rem;
+  }
+  
+  .map-placeholder {
+    min-height: 250px;
   }
 }

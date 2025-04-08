@@ -4,7 +4,7 @@ from sqlalchemy_serializer import SerializerMixin
 from sqlalchemy import ForeignKey, Enum, Table
 from sqlalchemy.orm import relationship
 from datetime import datetime
-from enum import Enum
+from enum import Enum as PyEnum
 
 db = SQLAlchemy()
 
@@ -14,6 +14,12 @@ driver_ambulance = db.Table('driver_ambulance_assignments',
     db.Column('ambulance_id', db.Integer, db.ForeignKey('ambulance.id'), primary_key=True),
 )
 
+# Enum definition for Request Status
+class RequestStatusEnum(PyEnum):
+    PENDING = "Pending"
+    IN_PROGRESS = "In Progress"
+    COMPLETED = "Completed"
+    CANCELLED = "Cancelled"
 
 class User(db.Model, SerializerMixin):
     __tablename__ = 'user'
@@ -121,7 +127,7 @@ class AmbulanceRequest(db.Model, SerializerMixin):
 
     payment_method = db.Column(db.String(20))
     estimated_cost = db.Column(db.Float)
-    status = db.Column(db.String(100))
+    status = db.Column(db.Enum(RequestStatusEnum), default=RequestStatusEnum.PENDING)
 
     patient = db.relationship('User', back_populates='requests')
     hospital = db.relationship('Hospital', back_populates='requests')
@@ -139,14 +145,14 @@ class AmbulanceRequest(db.Model, SerializerMixin):
             "patient_location_lng": self.patient_location_lng,
             "payment_method": self.payment_method,
             "estimated_cost": self.estimated_cost,
-            "status": self.status
+            "status": self.status.name
         }
 
 class RideHistory(db.Model, SerializerMixin):
     serialize_rules = ('-patient.ride_histories', '-hospital.ride_histories', '-ambulance.ride_histories', '-driver.ride_histories', '-request.ride_history',)
 
     id = db.Column(db.Integer, primary_key=True)
-    request_id = db.Column(db.Integer, db.ForeignKey('ambulance_request.id'), nullable=False, unique=True)
+    request_id = db.Column(db.Integer, db.ForeignKey('ambulance_request.id'), nullable=False)
     patient_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     hospital_id = db.Column(db.Integer, db.ForeignKey('hospital.id'), nullable=False)
     ambulance_id = db.Column(db.Integer, db.ForeignKey('ambulance.id'), nullable=False)

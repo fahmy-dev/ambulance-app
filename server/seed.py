@@ -2,6 +2,11 @@ from app import app, db
 from models import User, Driver, Hospital, Ambulance, AmbulanceRequest, RideHistory
 from datetime import datetime
 
+
+with app.app_context():
+    db.drop_all()
+    db.create_all()
+
 # Create some sample users, drivers, hospitals, and ambulances
 def seed_data():
     # Creating Users (patients)
@@ -28,7 +33,7 @@ def seed_data():
     request1 = AmbulanceRequest(patient_id=user1.id, hospital_id=hospital1.id, ambulance_id=ambulance1.id, 
                                 patient_location_lat=1.290270, patient_location_lng=36.8219, payment_method="Cash", estimated_cost=500.0)
     request2 = AmbulanceRequest(patient_id=user2.id, hospital_id=hospital2.id, ambulance_id=ambulance2.id, 
-                                patient_location_lat=1.3020, patient_location_lng=36.8215, payment_method="Insurance", estimated_cost=600.0)
+                                patient_location_lat=1.3020, patient_location_lng=36.8215, payment_method="Insurance", estimated_cost=600.0, status="COMPLETED")
 
     db.session.add_all([request1, request2])
     db.session.commit()

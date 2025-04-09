@@ -1,12 +1,13 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 function Navbar() {
   const navigate = useNavigate();
-  const token = localStorage.getItem('token');
+  const { user, logout } = useAuth();
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
+    logout();
     navigate('/auth');
   };
 
@@ -20,11 +21,11 @@ function Navbar() {
         <div className="nav-links">
           <Link to="/home">Home</Link>
           <Link to="/contact">Contact</Link>
-          {token && <Link to="/my-requests">My Requests</Link>}
+          {user && <Link to="/my-requests">My Requests</Link>}
         </div>
 
         <div className="auth-buttons">
-          {token ? (
+          {user ? (
             <button onClick={handleLogout}>Logout</button>
           ) : (
             <Link to="/auth">

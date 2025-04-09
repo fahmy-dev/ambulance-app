@@ -5,177 +5,115 @@ function MyRequests() {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [cancellingId, setCancellingId] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Load mock data immediately without authentication check
     fetchRequests();
-  }, []);  // Removed navigate dependency for testing
+  }, []);
 
   const fetchRequests = async () => {
     try {
-      // Commenting out token checks for testing
-      /*
-      const token = localStorage.getItem('token');
-      const response = await fetch("/api/requests/my-requests", {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      */
-
-      // For testing, using mock data
+      // Mock data that matches your screenshot
       const mockData = [
         {
-          id: 1,
-          pickup_location: "Hospital A",
-          destination: "Hospital B",
-          created_at: new Date().toISOString(),
+          id: "A123",
+          pickup_location: "Nairobi West Hospital",
+          created_at: "2024-04-01T00:00:00.000Z",
           status: "pending"
         },
         {
-          id: 2,
-          pickup_location: "Clinic C",
-          destination: "Hospital D",
-          created_at: new Date().toISOString(),
+          id: "A243",
+          pickup_location: "Nairobi Hospital",
+          created_at: "2024-04-01T00:00:00.000Z",
+          status: "completed"
+        },
+        {
+          id: "A351",
+          pickup_location: "Aga Khan Hospital",
+          created_at: "2024-04-01T00:00:00.000Z",
           status: "completed"
         }
       ];
-
+      
       setRequests(mockData);
       
-      /* Commenting out error handling for testing
-      if (response.status === 401) {
-        localStorage.removeItem('token');
-        navigate('/auth');
-        return;
-      }
+      // Simulating network delay
+      setTimeout(() => {
+        setLoading(false);
+      }, 500);
       
-      if (!response.ok) {
-        throw new Error("Unable to load your requests");
-      }
-      
-      const data = await response.json();
-      setRequests(data);
-      */
     } catch (err) {
       setError(err.message);
-    } finally {
       setLoading(false);
     }
   };
 
-  const handleCancelRequest = async (requestId) => {
-    try {
-      setCancellingId(requestId);
-      // Commenting out API call for testing
-      /*
-      const token = localStorage.getItem('token');
-      const response = await fetch(`/api/requests/${requestId}/cancel`, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.status === 401) {
-        localStorage.removeItem('token');
-        navigate('/auth');
-        return;
-      }
-
-      if (!response.ok) {
-        throw new Error('Unable to cancel request');
-      }
-      */
-
-      // For testing, just update the state
-      setRequests(requests.map(req => 
-        req.id === requestId ? { ...req, status: 'cancelled' } : req
-      ));
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setCancellingId(null);
-    }
-  };
-
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
   if (loading) {
-    return <div>Loading your requests...</div>;
+    return <div className="loading-spinner">Loading your requests...</div>;
   }
 
   if (error) {
     return (
-      <div>
+      <div className="error-container">
         <h3>Error</h3>
         <p>{error}</p>
-        <button onClick={fetchRequests}>Try Again</button>
+        <button onClick={fetchRequests} className="retry-btn">
+          Try Again
+        </button>
       </div>
     );
   }
 
   return (
-    <div>
-      <div>
-        <h2>My Ambulance Requests</h2>
-        <button onClick={() => navigate('/')}>
-          Request New Ambulance
-        </button>
-      </div>
+    <div className="my-requests-page">
+      <h1 className="page-title">My Requests</h1>
 
       {requests.length === 0 ? (
-        <p>No requests found</p>
+        <div className="no-requests">
+          <p>No requests found</p>
+          <button 
+            onClick={() => navigate('/home')} 
+            className="request-btn"
+          >
+            Make Your First Request
+          </button>
+        </div>
       ) : (
-        <table>
-          <thead>
-            <tr>
-              <th>Request ID</th>
-              <th>Pickup Location</th>
-              <th>Destination</th>
-              <th>Requested On</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {requests.map((request) => (
-              <tr key={request.id}>
-                <td>#{request.id}</td>
-                <td>{request.pickup_location}</td>
-                <td>{request.destination}</td>
-                <td>{formatDate(request.created_at)}</td>
-                <td>
-                  <span>{request.status}</span>
-                </td>
-                <td>
-                  {request.status === "pending" && (
-                    <button
-                      disabled={cancellingId === request.id}
-                      onClick={() => handleCancelRequest(request.id)}
-                    >
-                      {cancellingId === request.id ? 
-                        'Cancelling...' : 
-                        'Cancel Request'
-                      }
-                    </button>
-                  )}
-                </td>
+        <div className="requests-table">
+          <table>
+            <thead>
+              <tr>
+                <th>Request ID</th>
+                <th>Hospital</th>
+                <th>Date</th>
+                <th>Status</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {requests.map((request) => (
+                <tr key={request.id}>
+                  <td>#{request.id}</td>
+                  <td>{request.pickup_location}</td>
+                  <td>
+                    {new Date(request.created_at).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
+                  </td>
+                  <td>
+                    {request.status === "pending" ? (
+                      <span className="status-pending">⊙ Pending</span>
+                    ) : (
+                      <span className="status-done">✓ Done</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );

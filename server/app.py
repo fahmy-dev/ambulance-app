@@ -74,11 +74,26 @@ def create_user():
 
 @app.route('/users', methods=['GET'])
 def get_users():
-    try:
-        users = User.query.all()
-        return jsonify([u.to_dict() for u in users])
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    search_query = request.args.get('search', '', type=str)
+    lat_filter = request.args.get('lat', None, type=float)
+    lng_filter = request.args.get('lng', None, type=float)
+    
+    query = User.query
+    
+    if search_query:
+        query = query.filter(User.name.contains(search_query))
+    
+    if lat_filter and lng_filter:
+        query = query.filter(User.location_lat == lat_filter, User.location_lng == lng_filter)
+    
+    users = query.all()
+    
+    # Error handling: If no users are found
+    if not users:
+        return jsonify({"error": "No users found matching the search criteria"}), 404
+    
+    return jsonify([u.to_dict() for u in users])
+
 
 # --------------------- HOSPITAL ROUTES ---------------------
 
@@ -110,11 +125,26 @@ def create_hospital():
 
 @app.route('/hospitals', methods=['GET'])
 def get_hospitals():
-    try:
-        hospitals = Hospital.query.all()
-        return jsonify([h.to_dict() for h in hospitals])
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    search_query = request.args.get('search', '', type=str)
+    lat_filter = request.args.get('lat', None, type=float)
+    lng_filter = request.args.get('lng', None, type=float)
+    
+    query = Hospital.query
+    
+    if search_query:
+        query = query.filter(Hospital.name.contains(search_query))
+    
+    if lat_filter and lng_filter:
+        query = query.filter(Hospital.location_lat == lat_filter, Hospital.location_lng == lng_filter)
+    
+    hospitals = query.all()
+    
+    # Error handling: If no hospitals are found
+    if not hospitals:
+        return jsonify({"error": "No hospitals found matching the search criteria"}), 404
+    
+    return jsonify([h.to_dict() for h in hospitals])
+
 
 @app.route('/hospitals/<int:id>', methods=['PATCH'])
 @validate_json(optional_fields=['location_lat', 'location_lng'])
@@ -173,11 +203,25 @@ def create_driver():
 
 @app.route('/drivers', methods=['GET'])
 def get_drivers():
-    try:
-        drivers = Driver.query.all()
-        return jsonify([d.to_dict() for d in drivers])
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    search_query = request.args.get('search', '', type=str)
+    availability_filter = request.args.get('is_available', None, type=bool)
+    
+    query = Driver.query
+    
+    if search_query:
+        query = query.filter(Driver.name.contains(search_query))
+    
+    if availability_filter is not None:
+        query = query.filter(Driver.is_available == availability_filter)
+    
+    drivers = query.all()
+    
+    # Error handling: If no drivers are found
+    if not drivers:
+        return jsonify({"error": "No drivers found matching the search criteria"}), 404
+    
+    return jsonify([d.to_dict() for d in drivers])
+
 
 @app.route('/drivers/<int:id>', methods=['PATCH'])
 @validate_json(optional_fields=['is_available'])
@@ -237,11 +281,28 @@ def create_ambulance():
 
 @app.route('/ambulances', methods=['GET'])
 def get_ambulances():
-    try:
-        ambulances = Ambulance.query.all()
-        return jsonify([a.to_dict() for a in ambulances])
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    search_query = request.args.get('search', '', type=str)
+    is_available_filter = request.args.get('is_available', None, type=bool)
+    hospital_filter = request.args.get('hospital_id', None, type=int)
+    
+    query = Ambulance.query
+    
+    if search_query:
+        query = query.filter(Ambulance.vehicle_no.contains(search_query))
+    
+    if is_available_filter is not None:
+        query = query.filter(Ambulance.is_available == is_available_filter)
+    
+    if hospital_filter:
+        query = query.filter(Ambulance.hospital_id == hospital_filter)
+    
+    ambulances = query.all()
+    
+    # Error handling: If no ambulances are found
+    if not ambulances:
+        return jsonify({"error": "No ambulances found matching the search criteria"}), 404
+    
+    return jsonify([a.to_dict() for a in ambulances])
 
 # --------------------- AMBULANCE REQUEST ROUTES ---------------------
 
@@ -271,11 +332,25 @@ def create_request():
 
 @app.route('/requests', methods=['GET'])
 def get_requests():
-    try:
-        requests = AmbulanceRequest.query.all()
-        return jsonify([r.to_dict() for r in requests])
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    search_query = request.args.get('search', '', type=str)
+    status_filter = request.args.get('status', None, type=str)
+    
+    query = AmbulanceRequest.query
+    
+    if search_query:
+        query = query.filter(AmbulanceRequest.patient.has(User.name.contains(search_query)))
+    
+    if status_filter:
+        query = query.filter(AmbulanceRequest.status == status_filter)
+    
+    requests = query.all()
+    
+    # Error handling: If no requests are found
+    if not requests:
+        return jsonify({"error": "No requests found matching the search criteria"}), 404
+    
+    return jsonify([r.to_dict() for r in requests])
+
 
 # --------------------- RIDE HISTORY ROUTES ---------------------
 
@@ -309,11 +384,60 @@ def create_ride_history():
 
 @app.route('/ride_history', methods=['GET'])
 def get_ride_histories():
-    try:
-        rides = RideHistory.query.all()
-        return jsonify([r.to_dict() for r in rides])
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    search_query = request.args.get('search', '', type=str)
+    start_time_filter = request.args.get('start_time', None, type=str)
+    end_time_filter = request.args.get('end_time', None, type=str)
+    patient_filter = request.args.get('patient_id', None, type=int)
+    hospital_filter = request.args.get('hospital_id', None, type=int)
+    status_filter = request.args.get('status', None, type=str)
+    
+    query = RideHistory.query
+    
+    # Search by request_id or patient_id or feedback
+    if search_query:
+        query = query.filter(
+            (RideHistory.request_id.like(f"%{search_query}%")) |
+            (RideHistory.patient_id.like(f"%{search_query}%")) |
+            (RideHistory.feedback.like(f"%{search_query}%"))
+        )
+    
+    # Filter by start_time
+    if start_time_filter:
+        try:
+            start_time = datetime.strptime(start_time_filter, '%Y-%m-%d %H:%M:%S')
+            query = query.filter(RideHistory.start_time >= start_time)
+        except ValueError:
+            return jsonify({"error": "Invalid start_time format. Please use YYYY-MM-DD HH:MM:SS"}), 400
+    
+    # Filter by end_time
+    if end_time_filter:
+        try:
+            end_time = datetime.strptime(end_time_filter, '%Y-%m-%d %H:%M:%S')
+            query = query.filter(RideHistory.end_time <= end_time)
+        except ValueError:
+            return jsonify({"error": "Invalid end_time format. Please use YYYY-MM-DD HH:MM:SS"}), 400
+    
+    # Filter by patient_id
+    if patient_filter:
+        query = query.filter(RideHistory.patient_id == patient_filter)
+    
+    # Filter by hospital_id
+    if hospital_filter:
+        query = query.filter(RideHistory.hospital_id == hospital_filter)
+    
+    # Filter by ride status (if available)
+    if status_filter:
+        query = query.filter(RideHistory.status == status_filter)
+    
+    # Get the filtered ride histories
+    ride_histories = query.all()
+    
+    # Error handling: If no ride histories are found
+    if not ride_histories:
+        return jsonify({"error": "No ride histories found matching the search criteria"}), 404
+    
+    return jsonify([r.to_dict() for r in ride_histories])
+
 
 
 if __name__ == '__main__':

@@ -1,3 +1,4 @@
+what we have done so far:-
 importations
 models
     -user
@@ -142,8 +143,4 @@ creating routes
 
 
 
-http request         body        status code     parameters
-post                     ✅          ✅                  ✅ 
-PATCH                    ✅             ✅               ✅ 
-DELETE                  X              ✅                ✅ 
-GET                     X               ✅                  ✅ 
+added a search functionality on the get route

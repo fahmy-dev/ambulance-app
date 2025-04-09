@@ -6,6 +6,7 @@ from sqlalchemy.orm import relationship
 from datetime import datetime
 from enum import Enum as PyEnum
 
+
 db = SQLAlchemy()
 
 # Association table for many-to-many between Driver and Ambulance

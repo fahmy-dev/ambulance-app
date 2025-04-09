@@ -144,3 +144,29 @@ creating routes
 
 
 added a search functionality on the get route
+    💡 General Format:
+        GET http://127.0.0.1:5000/<endpoint>?search=<keyword>
+    🔍 1. Search Users by Name or Email
+        GET http://127.0.0.1:5000/users/search?search=Joy
+            📌 This will return users whose name or email includes Joy.
+
+    🔍 2. Search Drivers by Name or Contact
+        GET http://127.0.0.1:5000/drivers/search?search=James
+            📌 This will return drivers with names or contact numbers that match James.
+
+    🔍 3. Search Hospitals by Name or Location
+        GET http://127.0.0.1:5000/hospitals/search?search=Nairobi
+            📌 This returns hospitals with "Nairobi" in the name or location.
+
+    🔍 4. Search Ambulances by Vehicle Number or Current Location
+        GET http://127.0.0.1:5000/ambulances/search?search=KDA
+            📌 This returns ambulances with a vehicle number or location containing KDA.
+
+    🔍 5. Search Ride History by Note, Feedback, or Patient Name
+        GET http://127.0.0.1:5000/ride_history/search?search=Excellent
+            📌 This returns ride history entries where the note or feedback contains Excellent.
+
+❗ Error Handling (if keyword doesn't match):
+    {
+    "error": "No matching results found."
+    }

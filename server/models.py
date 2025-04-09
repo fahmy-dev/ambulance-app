@@ -189,4 +189,4 @@ class RideHistory(db.Model, SerializerMixin):
             "payment_method": self.payment_method,
             "rating": self.rating,
             "feedback": self.feedback
-        }
+        }  

@@ -50,7 +50,7 @@ def index():
 
 # --------------------- USER ROUTES ---------------------
 @app.route('/users', methods=['POST'])
-@validate_json(required_fields=['name', 'email'])
+@validate_json(required_fields=['name', 'email', 'password'])
 def create_user():
     data = request.get_json()
     existing_user = User.query.filter_by(email=data['email']).first()
@@ -63,6 +63,8 @@ def create_user():
         location_lat=data.get('location_lat'),
         location_lng=data.get('location_lng')
     )
+    user.set_password(data['password'])  # Hashing the password before storing it
+
     try:
         db.session.add(user)
         db.session.commit()
@@ -70,6 +72,7 @@ def create_user():
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
+
 
 @app.route('/users', methods=['GET'])
 def get_users():
@@ -291,15 +294,17 @@ def get_ride_histories():
         return jsonify({"error": str(e)}), 500
 
 @app.route('/login', methods=['POST'])
-@validate_json(required_fields=['email'])
+@validate_json(required_fields=['email', 'password'])
 def login():
     data = request.get_json()
     user = User.query.filter_by(email=data['email']).first()
-    if not user:
-        return jsonify({"error": "Invalid email"}), 401
+    
+    if not user or not user.check_password(data['password']):
+        return jsonify({"error": "Invalid email or password"}), 401
 
     access_token = create_access_token(identity=user.id)
     return jsonify({"access_token": access_token, "user": user.to_dict()}), 200
+
 
 if __name__ == '__main__':
     app.run(port=5555, debug=True)

@@ -1,52 +1,38 @@
-// import React, { useState } from 'react';
-// import { Link } from 'react-router-dom';
-// import { FaBars, FaTimes } from 'react-icons/fa';
-// import './Navbar.css';
+// import React from 'react';
+// import { Link, useNavigate } from 'react-router-dom';
+// import { useAuth } from '../context/AuthContext';
 
 // function Navbar() {
-//   const [click, setClick] = useState(false);
-//   const handleClick = () => setClick(!click);
-//   const closeMobileMenu = () => setClick(false);
+//   const navigate = useNavigate();
+//   const { user, logout } = useAuth();
+
+//   const handleLogout = () => {
+//     logout();
+//     navigate('/auth');
+//   };
 
 //   return (
-//     <nav className='navbar'>
-//       <div className='navbar-container'>
-//         <Link to='/' className='navbar-logo' onClick={closeMobileMenu}>
-//           <img src="/ambulance-logo.png" alt="Ambulance Logo" className="nav-logo"/>
-//           QuickResponse
+//     <nav>
+//       <div className="container">
+//         <Link to="/" className="logo">
+//           Ambulance Services
 //         </Link>
 
-//         <div className='menu-icon' onClick={handleClick}>
-//           {click ? <FaTimes /> : <FaBars />}
+//         <div className="nav-links">
+//           <Link to="/home">Home</Link>
+//           <Link to="/contact">Contact</Link>
+//           {user && <Link to="/my-requests">My Requests</Link>}
 //         </div>
 
-//         <ul className={click ? 'nav-menu active' : 'nav-menu'}>
-//           <li className='nav-item'>
-//             <Link to='/' className='nav-links' onClick={closeMobileMenu}>
-//               Home
+//         <div className="auth-buttons">
+//           {user ? (
+//             <button onClick={handleLogout}>Logout</button>
+//           ) : (
+//             <Link to="/auth">
+//               <button>Sign In</button>
 //             </Link>
-//           </li>
-//           <li className='nav-item'>
-//             <Link to='/services' className='nav-links' onClick={closeMobileMenu}>
-//               Services
-//             </Link>
-//           </li>
-//           <li className='nav-item'>
-//             <Link to='/about' className='nav-links' onClick={closeMobileMenu}>
-//               About
-//             </Link>
-//           </li>
-//           <li className='nav-item'>
-//             <Link to='/contact' className='nav-links' onClick={closeMobileMenu}>
-//               Contact
-//             </Link>
-//           </li>
-//           <li className='nav-item'>
-//             <Link to='/login' className='nav-links-mobile' onClick={closeMobileMenu}>
-//               Login
-//             </Link>
-//           </li>
-//         </ul>
+//           )}
+//         </div>
 //       </div>
 //     </nav>
 //   );
@@ -55,49 +41,57 @@
 // export default Navbar;
 
 
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { FaBars, FaTimes } from 'react-icons/fa';
+
+import React from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 function Navbar() {
-  const [click, setClick] = useState(false);
-  const handleClick = () => setClick(!click);
-  const closeMobileMenu = () => setClick(false);
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/auth', { state: { mode: 'login' } }); // go back to login page on logout
+  };
 
   return (
-    <nav className='navbar'>
-      <div className='navbar-container'>
-        <Link to='/home' className='navbar-logo' onClick={closeMobileMenu}>
-          <img src="/ambulance-logo.png" alt="Ambulance Logo" className="nav-logo"/>
-          QuickResponse
+    <nav className="bg-white shadow-md px-6 py-4 flex justify-between items-center">
+      {/* Logo + Links */}
+      <div className="flex items-center space-x-6">
+        <Link to="/" className="text-xl font-bold text-blue-600">
+          Ambulance Services
         </Link>
-
-        <div className='menu-icon' onClick={handleClick}>
-          {click ? <FaTimes /> : <FaBars />}
+        <div className="flex space-x-4 text-gray-700">
+          <Link to="/home">Home</Link>
+          <Link to="/contact">Contact</Link>
+          {user && <Link to="/my-requests">My Requests</Link>}
         </div>
+      </div>
 
-        <ul className={click ? 'nav-menu active' : 'nav-menu'}>
-        <li className='nav-item'>
-            <Link to='/Home' className='nav-links-mobile' onClick={closeMobileMenu}>
-              Home
+      {/* Auth Buttons */}
+      <div className="flex space-x-4">
+        {user ? (
+          <button
+            onClick={handleLogout}
+            className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+          >
+            Logout
+          </button>
+        ) : (
+          <>
+            <Link to="/auth" state={{ mode: 'login' }}>
+              <button className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                Login
+              </button>
             </Link>
-          </li>
-          <li className='nav-item'>
-            <Link to='/MyRequests' className='nav-links-mobile' onClick={closeMobileMenu}>
-              My Requests
+            <Link to="/auth" state={{ mode: 'register' }}>
+              <button className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+                Register
+              </button>
             </Link>
-          </li>
-          <li className='nav-item'>
-            <Link to='/Contact Us' className='nav-links' onClick={closeMobileMenu}>
-              Contact Us
-            </Link>
-          </li>
-          <li className='nav-item'>
-            <Link to='/Auth' className='nav-links' onClick={closeMobileMenu}>
-              Auth
-            </Link>
-          </li>
-        </ul>
+          </>
+        )}
       </div>
     </nav>
   );

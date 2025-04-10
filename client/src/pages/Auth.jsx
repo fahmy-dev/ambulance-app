@@ -1,140 +1,203 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+// import React, { useState } from "react";
+// import { Formik, Form, Field, ErrorMessage } from "formik";
+// import * as Yup from "yup";
+
+// function Auth() {
+//   const [isLogin, setIsLogin] = useState(true);
+
+//   const toggleForm = () => setIsLogin((prev) => !prev);
+
+//   const loginInitialValues = { email: "", password: "" };
+//   const registerInitialValues = { name: "", email: "", password: "", confirmPassword: "" };
+
+//   const loginSchema = Yup.object({
+//     email: Yup.string().email("Invalid email").required("Email is required"),
+//     password: Yup.string().required("Password is required"),
+//   });
+
+//   const registerSchema = Yup.object({
+//     name: Yup.string().required("Full name is required"),
+//     email: Yup.string().email("Invalid email").required("Email is required"),
+//     password: Yup.string().min(6, "Min 6 characters").required("Password is required"),
+//     confirmPassword: Yup.string()
+//       .oneOf([Yup.ref("password"), null], "Passwords must match")
+//       .required("Confirm your password"),
+//   });
+
+//   const handleSubmit = (values) => {
+//     console.log(isLogin ? "Logging in with:" : "Registering with:", values);
+//     // Hook into backend here
+//   };
+
+//   return (
+//     <div className="max-w-md mx-auto mt-10 p-6 border rounded shadow-md">
+//       <div className="flex justify-around mb-6">
+//         <button
+//           onClick={() => setIsLogin(true)}
+//           className={`px-4 py-2 rounded font-semibold ${
+//             isLogin ? "bg-blue-600 text-white" : "bg-gray-200"
+//           }`}
+//         >
+//           Login
+//         </button>
+//         <button
+//           onClick={() => setIsLogin(false)}
+//           className={`px-4 py-2 rounded font-semibold ${
+//             !isLogin ? "bg-green-600 text-white" : "bg-gray-200"
+//           }`}
+//         >
+//           Register
+//         </button>
+//       </div>
+
+//       <h2 className="text-2xl font-bold mb-4 text-center">
+//         {isLogin ? "Login to Your Account" : "Create a New Account"}
+//       </h2>
+
+//       <Formik
+//         initialValues={isLogin ? loginInitialValues : registerInitialValues}
+//         validationSchema={isLogin ? loginSchema : registerSchema}
+//         onSubmit={handleSubmit}
+//       >
+//         <Form className="space-y-4">
+//           {!isLogin && (
+//             <div>
+//               <label className="block text-sm font-medium">Full Name</label>
+//               <Field name="name" placeholder="Jane Doe" className="w-full p-2 border rounded" />
+//               <ErrorMessage name="name" component="div" className="text-red-500 text-sm" />
+//             </div>
+//           )}
+
+//           <div>
+//             <label className="block text-sm font-medium">Email</label>
+//             <Field name="email" type="email" placeholder="you@example.com" className="w-full p-2 border rounded" />
+//             <ErrorMessage name="email" component="div" className="text-red-500 text-sm" />
+//           </div>
+
+//           <div>
+//             <label className="block text-sm font-medium">Password</label>
+//             <Field name="password" type="password" placeholder="••••••••" className="w-full p-2 border rounded" />
+//             <ErrorMessage name="password" component="div" className="text-red-500 text-sm" />
+//           </div>
+
+//           {!isLogin && (
+//             <div>
+//               <label className="block text-sm font-medium">Confirm Password</label>
+//               <Field
+//                 name="confirmPassword"
+//                 type="password"
+//                 placeholder="••••••••"
+//                 className="w-full p-2 border rounded"
+//               />
+//               <ErrorMessage name="confirmPassword" component="div" className="text-red-500 text-sm" />
+//             </div>
+//           )}
+
+//           <button
+//             type="submit"
+//             className={`w-full ${
+//               isLogin ? "bg-blue-600" : "bg-green-600"
+//             } text-white p-2 rounded hover:opacity-90`}
+//           >
+//             {isLogin ? "Login" : "Register"}
+//           </button>
+//         </Form>
+//       </Formik>
+//     </div>
+//   );
+// }
+
+// export default Auth;
+
+
+import React from "react";
+import { useLocation } from "react-router-dom";
+import { Formik, Form, Field, ErrorMessage } from "formik";
+import * as Yup from "yup";
 
 function Auth() {
-  const [isLogin, setIsLogin] = useState(true);
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-    confirmPassword: "",
-    name: ""
+  const location = useLocation();
+  const mode = location.state?.mode || "login"; // default to login
+
+  const isLogin = mode === "login";
+
+  const loginInitialValues = { email: "", password: "" };
+  const registerInitialValues = { name: "", email: "", password: "", confirmPassword: "" };
+
+  const loginSchema = Yup.object({
+    email: Yup.string().email("Invalid email").required("Email is required"),
+    password: Yup.string().required("Password is required"),
   });
-  const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-  };
+  const registerSchema = Yup.object({
+    name: Yup.string().required("Full name is required"),
+    email: Yup.string().email("Invalid email").required("Email is required"),
+    password: Yup.string().min(6, "Min 6 characters").required("Password is required"),
+    confirmPassword: Yup.string()
+      .oneOf([Yup.ref("password"), null], "Passwords must match")
+      .required("Confirm your password"),
+  });
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
-
-    // Validate passwords match for signup
-    if (!isLogin && formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match");
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const response = await fetch(`/api/auth/${isLogin ? 'login' : 'signup'}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData)
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Authentication failed');
-      }
-
-      // Save token and redirect
-      localStorage.setItem('token', data.token);
-      navigate('/my-requests');
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
+  const handleSubmit = (values) => {
+    console.log(isLogin ? "Logging in:" : "Registering:", values);
+    // connect to backend here
   };
 
   return (
-    <div>
-      <div>
-        <h2>{isLogin ? "Login" : "Sign Up"}</h2>
-        <p>Welcome to Ambulance Services</p>
-      </div>
+    <div className="max-w-md mx-auto mt-10 p-6 border rounded shadow-md">
+      <h2 className="text-2xl font-bold mb-4 text-center">
+        {isLogin ? "Login to Your Account" : "Create a New Account"}
+      </h2>
 
-      {error && <div>{error}</div>}
+      <Formik
+        initialValues={isLogin ? loginInitialValues : registerInitialValues}
+        validationSchema={isLogin ? loginSchema : registerSchema}
+        onSubmit={handleSubmit}
+      >
+        <Form className="space-y-4">
+          {!isLogin && (
+            <div>
+              <label className="block text-sm font-medium">Full Name</label>
+              <Field name="name" placeholder="Jane Doe" className="w-full p-2 border rounded" />
+              <ErrorMessage name="name" component="div" className="text-red-500 text-sm" />
+            </div>
+          )}
 
-      <form onSubmit={handleSubmit}>
-        {!isLogin && (
           <div>
-            <label htmlFor="name">Full Name</label>
-            <input
-              type="text"
-              id="name"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              required
-            />
+            <label className="block text-sm font-medium">Email</label>
+            <Field name="email" type="email" placeholder="you@example.com" className="w-full p-2 border rounded" />
+            <ErrorMessage name="email" component="div" className="text-red-500 text-sm" />
           </div>
-        )}
 
-        <div>
-          <label htmlFor="email">Email</label>
-          <input
-            type="email"
-            id="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            required
-          />
-        </div>
-
-        <div>
-          <label htmlFor="password">Password</label>
-          <input
-            type="password"
-            id="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            required
-          />
-        </div>
-
-        {!isLogin && (
           <div>
-            <label htmlFor="confirmPassword">Confirm Password</label>
-            <input
-              type="password"
-              id="confirmPassword"
-              name="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              required
-            />
+            <label className="block text-sm font-medium">Password</label>
+            <Field name="password" type="password" placeholder="••••••••" className="w-full p-2 border rounded" />
+            <ErrorMessage name="password" component="div" className="text-red-500 text-sm" />
           </div>
-        )}
 
-        <button type="submit" disabled={loading}>
-          {loading ? "Please wait..." : (isLogin ? "Login" : "Sign Up")}
-        </button>
-      </form>
+          {!isLogin && (
+            <div>
+              <label className="block text-sm font-medium">Confirm Password</label>
+              <Field
+                name="confirmPassword"
+                type="password"
+                placeholder="••••••••"
+                className="w-full p-2 border rounded"
+              />
+              <ErrorMessage name="confirmPassword" component="div" className="text-red-500 text-sm" />
+            </div>
+          )}
 
-      <div>
-        <p>
-          {isLogin ? "Don't have an account?" : "Already have an account?"}
           <button
-            onClick={() => setIsLogin(!isLogin)}
-            type="button"
+            type="submit"
+            className={`w-full ${
+              isLogin ? "bg-blue-600" : "bg-green-600"
+            } text-white p-2 rounded hover:opacity-90`}
           >
-            {isLogin ? "Sign Up" : "Login"}
+            {isLogin ? "Login" : "Register"}
           </button>
-        </p>
-      </div>
+        </Form>
+      </Formik>
     </div>
   );
 }

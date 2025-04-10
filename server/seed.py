@@ -11,7 +11,10 @@ with app.app_context():
 def seed_data():
     # Creating Users (patients)
     user1 = User(name="John Doe", email="john.doe@example.com", location_lat=1.290270, location_lng=36.8219)
+    user1.set_password("password123")  # Set password for user1
+    
     user2 = User(name="Jane Smith", email="jane.smith@example.com", location_lat=1.3020, location_lng=36.8215)
+    user2.set_password("password123")  # Set password for user2
 
     # Creating Drivers
     driver1 = Driver(name="Driver A", contact="1234567890", is_available=True, license_number="AB123CD")

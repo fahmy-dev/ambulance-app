@@ -43,9 +43,22 @@ class User(db.Model, SerializerMixin):
         """Hash and set password."""
         self.password_hash = generate_password_hash(password)
 
+    # Add this debugging to your User class's check_password method
     def check_password(self, password):
-        """Check hashed password."""
-        return check_password_hash(self.password_hash, password)
+        try:
+            # Print the password being checked and the stored hash for debugging
+            print(f"Checking password: {password}")
+            print(f"Stored password hash: {self.password_hash}")
+            
+            # Your existing password check logic
+            result = check_password_hash(self.password_hash, password)
+            print(f"Password check result: {result}")
+            return result
+        except Exception as e:
+            print(f"Error in check_password: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return False
 
     def to_dict(self):
         return {
@@ -200,4 +213,4 @@ class RideHistory(db.Model, SerializerMixin):
             "payment_method": self.payment_method,
             "rating": self.rating,
             "feedback": self.feedback
-        }  
+        }

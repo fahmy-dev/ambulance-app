@@ -1,32 +1,40 @@
 import React from "react";
-import { Navigate } from "react-router-dom";
-import Home from "./pages/Home";
-import ContactUs from "./pages/ContactUs";
-import Auth from "./pages/Auth";
-import MyRequests from "./pages/MyRequests";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
+function Navbar() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
-const routes = [
-  {
-    path: "/",
-    element: <Navigate to="/home" replace />
-  },
-  {
-    path: "/home",
-    element: <Home />
-  },
-  {
-    path: "/contact",
-    element: <ContactUs />
-  },
-  {
-    path: "/auth",
-    element: <Auth />
-  },
-  {
-    path: "/my-requests",
-    element: <MyRequests />
-  }
-]
+  const handleLogout = () => {
+    logout();
+    navigate("/home");
+  };
 
-export default routes
+  return (
+    <nav>
+      <div className="container">
+        <Link to="/" className="logo">Ambulance App</Link>
+        
+        <div className="nav-links">
+          <Link to="/home">Home</Link>
+          <Link to="/contact">Contact</Link>
+          <Link to="/my-requests">My Requests</Link>
+        </div>
+        
+        <div className="auth-buttons">
+          {user ? (
+            <button onClick={handleLogout} className="logout-btn">Logout</button>
+          ) : (
+            <>
+              <button onClick={() => navigate("/auth")} className="login-btn">Login</button>
+              <button onClick={() => navigate("/auth", { state: { mode: "register" } })} className="register-btn">Register</button>
+            </>
+          )}
+        </div>
+      </div>
+    </nav>
+  );
+}
+
+export default Navbar;

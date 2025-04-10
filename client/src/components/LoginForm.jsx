@@ -1,10 +1,12 @@
 import React, { useState } from "react";
+import { useAuth } from "../context/AuthContext";
 
 function LoginForm({ onSuccess, onToggleForm }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const { login } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -15,16 +17,17 @@ function LoginForm({ onSuccess, onToggleForm }) {
       // Validate inputs
       if (!email || !password) {
         setError("We need both your email and password to get you in safely.");
+        setIsLoading(false);
         return;
       }
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Use the API to login
+      const userData = await login({ email, password });
       
-      // Success case - in real app, would validate credentials with backend
-      onSuccess({ email });
+      // Success case - pass user data to parent component
+      onSuccess(userData);
     } catch (err) {
-      setError("Oops! Something went wrong on our end. Let's try that again.");
+      setError(err.message || "Invalid email or password. Please try again.");
     } finally {
       setIsLoading(false);
     }

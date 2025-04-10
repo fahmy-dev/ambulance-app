@@ -5,6 +5,23 @@ import ContactUs from "./pages/ContactUs";
 import Auth from "./pages/Auth";
 import MyRequests from "./pages/MyRequests";
 import Navbar from "./components/Navbar";
+import { useAuth } from "./context/AuthContext";
+
+// Protected route component
+const ProtectedRoute = ({ children }) => {
+  const { user, loading } = useAuth();
+  
+  // Show loading state while checking authentication
+  if (loading) {
+    return <div className="loading">Loading...</div>;
+  }
+  
+  if (!user) {
+    return <Navigate to="/auth" replace />;
+  }
+  
+  return children;
+};
 
 // Layout component with Navbar
 const Layout = () => {
@@ -15,6 +32,14 @@ const Layout = () => {
     </>
   );
 };
+
+// Simple 404 page component
+const NotFound = () => (
+  <div className="page-container">
+    <h1 className="page-title">Page Not Found</h1>
+    <p className="page-subtitle">The page you're looking for doesn't exist or has been moved.</p>
+  </div>
+);
 
 const routes = [
   {
@@ -39,7 +64,11 @@ const routes = [
       },
       {
         path: "my-requests",
-        element: <MyRequests />
+        element: <ProtectedRoute><MyRequests /></ProtectedRoute>
+      },
+      {
+        path: "*",
+        element: <NotFound />
       }
     ]
   }

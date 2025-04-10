@@ -1,39 +1,53 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import React from "react";
+import { useNavigate } from "react-router-dom";
 
-function RequestConfirmationPanel({ request, onClose }) {
+function RequestConfirmationPanel({ requestData, visible }) {
   const navigate = useNavigate();
-
-  const handleViewDetails = () => {
-    navigate('/my-requests');
+  
+  if (!visible || !requestData) return null;
+  
+  const formatTime = () => {
+    const now = new Date();
+    return now.toLocaleString('en-US', { 
+      month: 'short', 
+      day: 'numeric', 
+      hour: 'numeric', 
+      minute: 'numeric',
+      hour12: true 
+    });
   };
-
+  
+  const detailRows = [
+    { label: "Hospital", value: requestData.hospital.name },
+    { label: "Distance", value: requestData.distance },
+    { label: "ETA", value: `~ ${requestData.eta} Minutes` },
+    { label: "Payment Method", value: requestData.paymentMethod },
+    { label: "Time", value: formatTime() }
+  ];
+  
   return (
-    <div className="confirmation-panel">
-      <h3>Request Confirmed!</h3>
+    <div className="request-confirmation">
+      <div className="confirmation-header">
+        <span className="confirmation-icon">✓</span>
+        <h2>Ambulance Requested!</h2>
+        <p>Your request has been sent.</p>
+      </div>
+      
       <div className="confirmation-details">
-        <p>Your ambulance request has been successfully submitted.</p>
-        <div className="detail-item">
-          <span>Request ID:</span>
-          <strong>#{request.id}</strong>
-        </div>
-        <div className="detail-item">
-          <span>Pickup Location:</span>
-          <strong>{request.pickup_location}</strong>
-        </div>
-        <div className="detail-item">
-          <span>Destination:</span>
-          <strong>{request.destination}</strong>
-        </div>
+        {detailRows.map((row, index) => (
+          <div className="detail-row" key={index}>
+            <span className="detail-label">{row.label}:</span>
+            <span className="detail-value">{row.value}</span>
+          </div>
+        ))}
       </div>
-      <div className="confirmation-actions">
-        <button onClick={handleViewDetails} className="primary-btn">
-          View Request Details
-        </button>
-        <button onClick={onClose} className="secondary-btn">
-          Close
-        </button>
-      </div>
+      
+      <button 
+        className="view-requests-btn" 
+        onClick={() => navigate("/my-requests")}
+      >
+        View My Requests
+      </button>
     </div>
   );
 }

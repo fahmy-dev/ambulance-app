@@ -1,0 +1,172 @@
+what we have done so far:-
+importations
+models
+    -user
+        id , name, email(unique), location, password_hash
+    -ambulance
+        id, vehicle_no, driver_name, driver_contact, is_available(boolean), current_location, hospital_id
+    -hospital
+        id, name, location, availability(boolean), contact_info
+    -ride history
+        id, user_id, request_id, note, timestamp
+    -driver 
+        id, name, contact, availability
+    -ambulance_request
+        id, user_id,hospital_id, ambulance_id, user_location, timestamp, status (Enum: "Pending", "Gearing Up", "Dispatched", "En Route", "Arrived", "Completed", "Cancelled"), payment_method(m-pesa/cash)
+    -live location
+
+relationships
+    user-request(one-many)
+    hospital-request(one-many)
+    ambulance-request(one-many)
+    hospital-ambulance(one-many)
+    driver-ambulance(many-many)
+
+added serializer rules and to_dict in every model
+
+creating routes
+    🔹 USERS
+        ✅ Create User
+        POST /users
+            json
+            {
+            "name": "Joy Mutanu",
+            "email": "joy@example.com",
+            "location_lat": -1.2921,
+            "location_lng": 36.8219
+            }
+        ✅ Get All Users
+        GET /users
+
+    🔹 DRIVERS
+        ✅ Create Driver
+        POST /drivers
+            json
+            {
+            "name": "James Kamau",
+            "contact": "0712345678",
+            "license_number": "DL12345678"
+            }
+        ✅ Get All Drivers
+        GET /drivers
+
+        ✅ Update Driver
+        PATCH /drivers/1
+            json
+            {
+            "is_available": false
+            }
+        ✅ Delete Driver
+        DELETE /drivers/1
+
+    🔹 HOSPITALS
+        ✅ Create Hospital
+        POST /hospitals
+            json
+            {
+            "name": "Nairobi Hospital",
+            "location_lat": -1.3000,
+            "location_lng": 36.8000,
+            "contact_info": "0722555123"
+            }
+        ✅ Get All Hospitals
+        GET /hospitals
+
+        ✅ Update Hospital
+        PATCH /hospitals/1
+            json
+            {
+            "availability": false
+            }
+        ✅ Delete Hospital
+        DELETE /hospitals/1
+
+    🔹 AMBULANCES
+        ✅ Create Ambulance
+        POST /ambulances
+            json
+            {
+            "vehicle_no": "KDA 456A",
+            "location_lat": -1.2950,
+            "location_lng": 36.8200,
+            "hospital_id": 1
+            }
+        ✅ Get All Ambulances
+        GET /ambulances
+
+    🔹 AMBULANCE REQUESTS
+        ✅ Create Request
+        POST /requests
+            json
+            {
+            "patient_id": 1,
+            "hospital_id": 1,
+            "ambulance_id": 1,
+            "patient_location_lat": -1.2900,
+            "patient_location_lng": 36.8222,
+            "payment_method": "M-Pesa",
+            "estimated_cost": 5000,
+            "status": "Pending"
+            }
+        ✅ Get All Requests
+        GET /requests
+
+        ✅ Update Request
+        PATCH /requests/1
+            json
+            {
+            "status": "Completed"
+            }
+        ✅ Delete Request
+        DELETE /requests/1
+
+    🔹 RIDE HISTORY
+        ✅ Create Ride History
+        POST /ride_history
+            json
+            {
+            "request_id": 1,
+            "patient_id": 1,
+            "hospital_id": 1,
+            "ambulance_id": 1,
+            "driver_id": 1,
+            "start_time": "2025-04-08 14:00:00",
+            "end_time": "2025-04-08 14:30:00",
+            "total_duration": "30 mins",
+            "total_cost": 5000,
+            "payment_method": "M-Pesa",
+            "rating": 5,
+            "feedback": "Excellent service!"
+            }
+        ✅ Get All Ride Histories
+        GET /ride_history
+
+
+
+added a search functionality on the get route
+    💡 General Format:
+        GET http://127.0.0.1:5000/<endpoint>?search=<keyword>
+    🔍 1. Search Users by Name or Email
+        GET http://127.0.0.1:5000/users/search?search=Joy
+            📌 This will return users whose name or email includes Joy.
+
+    🔍 2. Search Drivers by Name or Contact
+        GET http://127.0.0.1:5000/drivers/search?search=James
+            📌 This will return drivers with names or contact numbers that match James.
+
+    🔍 3. Search Hospitals by Name or Location
+        GET http://127.0.0.1:5000/hospitals/search?search=Nairobi
+            📌 This returns hospitals with "Nairobi" in the name or location.
+
+    🔍 4. Search Ambulances by Vehicle Number or Current Location
+        GET http://127.0.0.1:5000/ambulances/search?search=KDA
+            📌 This returns ambulances with a vehicle number or location containing KDA.
+
+    🔍 5. Search Ride History by Note, Feedback, or Patient Name
+        GET http://127.0.0.1:5000/ride_history/search?search=Excellent
+            📌 This returns ride history entries where the note or feedback contains Excellent.
+
+❗ Error Handling (if keyword doesn't match):
+    {
+    "error": "No matching results found."
+    }

@@ -1,122 +1,47 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import React from "react";
 
-function MyRequests() {
-  const [requests, setRequests] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    // Load mock data immediately without authentication check
-    fetchRequests();
-  }, []);
-
-  const fetchRequests = async () => {
-    try {
-      // Mock data that matches your screenshot
-      const mockData = [
-        {
-          id: "A123",
-          pickup_location: "Nairobi West Hospital",
-          created_at: "2024-04-01T00:00:00.000Z",
-          status: "pending"
-        },
-        {
-          id: "A243",
-          pickup_location: "Nairobi Hospital",
-          created_at: "2024-04-01T00:00:00.000Z",
-          status: "completed"
-        },
-        {
-          id: "A351",
-          pickup_location: "Aga Khan Hospital",
-          created_at: "2024-04-01T00:00:00.000Z",
-          status: "completed"
-        }
-      ];
-      
-      setRequests(mockData);
-      
-      // Simulating network delay
-      setTimeout(() => {
-        setLoading(false);
-      }, 500);
-      
-    } catch (err) {
-      setError(err.message);
-      setLoading(false);
-    }
-  };
-
-  if (loading) {
-    return <div className="loading-spinner">Loading your requests...</div>;
-  }
-
-  if (error) {
-    return (
-      <div className="error-container">
-        <h3>Error</h3>
-        <p>{error}</p>
-        <button onClick={fetchRequests} className="retry-btn">
-          Try Again
-        </button>
-      </div>
-    );
-  }
+function Requests() {
+  // Sample data - you'd normally fetch this from an API
+  const myRequests = [
+    { id: 1, status: "Pending", date: "2025-04-09", location: "Downtown" },
+    { id: 2, status: "Completed", date: "2025-04-08", location: "West Side" },
+  ];
 
   return (
-    <div className="my-requests-page">
-      <h1 className="page-title">My Requests</h1>
+    <div className="max-w-3xl mx-auto p-4">
+      <h1 className="text-3xl font-bold mb-4 text-center">My Ambulance Requests</h1>
+      <p className="text-gray-600 text-center mb-6">
+        Here you can view the status of your recent ambulance requests.
+      </p>
 
-      {requests.length === 0 ? (
-        <div className="no-requests">
-          <p>No requests found</p>
-          <button 
-            onClick={() => navigate('/home')} 
-            className="request-btn"
-          >
-            Make Your First Request
-          </button>
-        </div>
+      {myRequests.length > 0 ? (
+        <ul className="space-y-4">
+          {myRequests.map((req) => (
+            <li key={req.id} className="border p-4 rounded shadow">
+              <div className="flex justify-between">
+                <span className="font-semibold">Date:</span> <span>{req.date}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="font-semibold">Location:</span> <span>{req.location}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="font-semibold">Status:</span>
+                <span
+                  className={`font-bold ${
+                    req.status === "Completed" ? "text-green-600" : "text-yellow-600"
+                  }`}
+                >
+                  {req.status}
+                </span>
+              </div>
+            </li>
+          ))}
+        </ul>
       ) : (
-        <div className="requests-table">
-          <table>
-            <thead>
-              <tr>
-                <th>Request ID</th>
-                <th>Hospital</th>
-                <th>Date</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {requests.map((request) => (
-                <tr key={request.id}>
-                  <td>#{request.id}</td>
-                  <td>{request.pickup_location}</td>
-                  <td>
-                    {new Date(request.created_at).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
-                    })}
-                  </td>
-                  <td>
-                    {request.status === "pending" ? (
-                      <span className="status-pending">⊙ Pending</span>
-                    ) : (
-                      <span className="status-done">✓ Done</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <p className="text-center text-gray-500">You haven't made any requests yet.</p>
       )}
     </div>
   );
 }
 
-export default MyRequests;
+export default Requests;

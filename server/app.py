@@ -1,32 +1,35 @@
+import os
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from models import db, User, Driver, Hospital, Ambulance, AmbulanceRequest, RideHistory
 from flask_migrate import Migrate
-from datetime import datetime
+from datetime import timedelta, datetime
 from functools import wraps
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///ambulance.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['JWT_SECRET_KEY'] = os.urandom(24)
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)
 
+jwt = JWTManager(app)
 CORS(app)
 db.init_app(app)
 migrate = Migrate(app, db)
 
-# Validation decorator
+# ---------------- VALIDATION DECORATOR ----------------
 def validate_json(required_fields=None, optional_fields=None):
     def decorator(f):
         @wraps(f)
         def wrapped(*args, **kwargs):
             data = request.get_json()
 
-            # Check for missing required fields
             if required_fields:
                 for field in required_fields:
                     if field not in data:
                         return jsonify({"error": f"Missing required field: {field}"}), 400
 
-            # Optionally, check if optional fields are empty
             if optional_fields:
                 for field in optional_fields:
                     if field in data and data[field] == "":
@@ -36,7 +39,7 @@ def validate_json(required_fields=None, optional_fields=None):
         return wrapped
     return decorator
 
-# General error handling
+# ---------------- GENERAL ERROR HANDLING ----------------
 @app.errorhandler(Exception)
 def handle_general_error(error):
     return jsonify({"error": "An unexpected error occurred", "details": str(error)}), 500
@@ -46,13 +49,10 @@ def index():
     return {"message": "Ambulance API is running!"}
 
 # --------------------- USER ROUTES ---------------------
-
 @app.route('/users', methods=['POST'])
-@validate_json(required_fields=['name', 'email'])
+@validate_json(required_fields=['name', 'email', 'password'])
 def create_user():
     data = request.get_json()
-
-    # Check if the user already exists
     existing_user = User.query.filter_by(email=data['email']).first()
     if existing_user:
         return jsonify({"error": "Email already in use"}), 400
@@ -63,6 +63,7 @@ def create_user():
         location_lat=data.get('location_lat'),
         location_lng=data.get('location_lng')
     )
+    user.set_password(data['password'])
 
     try:
         db.session.add(user)
@@ -73,6 +74,7 @@ def create_user():
         return jsonify({"error": str(e)}), 500
 
 @app.route('/users', methods=['GET'])
+@jwt_required()
 def get_users():
     search_query = request.args.get('search', '', type=str)
     lat_filter = request.args.get('lat', None, type=float)
@@ -96,13 +98,11 @@ def get_users():
 
 
 # --------------------- HOSPITAL ROUTES ---------------------
-
 @app.route('/hospitals', methods=['POST'])
+@jwt_required()
 @validate_json(required_fields=['name', 'location_lat', 'location_lng'])
 def create_hospital():
     data = request.get_json()
-
-    # Check if the hospital already exists
     existing_hospital = Hospital.query.filter_by(name=data['name']).first()
     if existing_hospital:
         return jsonify({"error": "Hospital already exists"}), 400
@@ -114,7 +114,6 @@ def create_hospital():
         availability=data.get('availability', True),
         contact_info=data.get('contact_info')
     )
-
     try:
         db.session.add(hospital)
         db.session.commit()
@@ -151,10 +150,8 @@ def get_hospitals():
 def update_hospital(id):
     hospital = Hospital.query.get_or_404(id)
     data = request.get_json()
-
     for key in data:
         setattr(hospital, key, data[key])
-
     try:
         db.session.commit()
         return jsonify(hospital.to_dict())
@@ -165,7 +162,6 @@ def update_hospital(id):
 @app.route('/hospitals/<int:id>', methods=['DELETE'])
 def delete_hospital(id):
     hospital = Hospital.query.get_or_404(id)
-
     try:
         db.session.delete(hospital)
         db.session.commit()
@@ -175,13 +171,11 @@ def delete_hospital(id):
         return jsonify({"error": str(e)}), 500
 
 # --------------------- DRIVER ROUTES ---------------------
-
 @app.route('/drivers', methods=['POST'])
+@jwt_required()
 @validate_json(required_fields=['name', 'contact'])
 def create_driver():
     data = request.get_json()
-
-    # Check if the driver already exists
     existing_driver = Driver.query.filter_by(contact=data['contact']).first()
     if existing_driver:
         return jsonify({"error": "Driver already exists with this contact"}), 400
@@ -192,7 +186,6 @@ def create_driver():
         license_number=data.get('license_number'),
         is_available=data.get('is_available', True)
     )
-
     try:
         db.session.add(driver)
         db.session.commit()
@@ -224,14 +217,13 @@ def get_drivers():
 
 
 @app.route('/drivers/<int:id>', methods=['PATCH'])
+@jwt_required()
 @validate_json(optional_fields=['is_available'])
 def update_driver(id):
     driver = Driver.query.get_or_404(id)
     data = request.get_json()
-
     for key in data:
         setattr(driver, key, data[key])
-
     try:
         db.session.commit()
         return jsonify(driver.to_dict())
@@ -240,9 +232,9 @@ def update_driver(id):
         return jsonify({"error": str(e)}), 500
 
 @app.route('/drivers/<int:id>', methods=['DELETE'])
+@jwt_required()
 def delete_driver(id):
     driver = Driver.query.get_or_404(id)
-
     try:
         db.session.delete(driver)
         db.session.commit()
@@ -252,13 +244,10 @@ def delete_driver(id):
         return jsonify({"error": str(e)}), 500
 
 # --------------------- AMBULANCE ROUTES ---------------------
-
 @app.route('/ambulances', methods=['POST'])
 @validate_json(required_fields=['vehicle_no', 'hospital_id'])
 def create_ambulance():
     data = request.get_json()
-
-    # Ensure the hospital exists
     hospital = Hospital.query.get(data['hospital_id'])
     if not hospital:
         return jsonify({"error": "Hospital not found"}), 404
@@ -270,7 +259,6 @@ def create_ambulance():
         location_lng=data.get('location_lng'),
         hospital_id=data['hospital_id']
     )
-
     try:
         db.session.add(ambulance)
         db.session.commit()
@@ -280,6 +268,7 @@ def create_ambulance():
         return jsonify({"error": str(e)}), 500
 
 @app.route('/ambulances', methods=['GET'])
+@jwt_required()
 def get_ambulances():
     search_query = request.args.get('search', '', type=str)
     is_available_filter = request.args.get('is_available', None, type=bool)
@@ -305,12 +294,10 @@ def get_ambulances():
     return jsonify([a.to_dict() for a in ambulances])
 
 # --------------------- AMBULANCE REQUEST ROUTES ---------------------
-
 @app.route('/requests', methods=['POST'])
 @validate_json(required_fields=['patient_id', 'hospital_id'])
 def create_request():
     data = request.get_json()
-
     request_obj = AmbulanceRequest(
         patient_id=data['patient_id'],
         hospital_id=data['hospital_id'],
@@ -321,7 +308,6 @@ def create_request():
         estimated_cost=data.get('estimated_cost'),
         status=data.get('status', "Pending")
     )
-
     try:
         db.session.add(request_obj)
         db.session.commit()
@@ -353,12 +339,11 @@ def get_requests():
 
 
 # --------------------- RIDE HISTORY ROUTES ---------------------
-
 @app.route('/ride_history', methods=['POST'])
-@validate_json(required_fields=['request_id', 'patient_id', 'hospital_id'])
+@jwt_required()
+@validate_json(required_fields=['request_id', 'patient_id', 'hospital_id', 'ambulance_id', 'start_time', 'end_time', 'total_duration', 'total_cost', 'payment_method'])
 def create_ride_history():
     data = request.get_json()
-
     try:
         ride = RideHistory(
             request_id=data['request_id'],
@@ -374,7 +359,6 @@ def create_ride_history():
             rating=data.get('rating'),
             feedback=data.get('feedback')
         )
-        
         db.session.add(ride)
         db.session.commit()
         return jsonify(ride.to_dict()), 201
@@ -383,6 +367,7 @@ def create_ride_history():
         return jsonify({"error": str(e)}), 500
 
 @app.route('/ride_history', methods=['GET'])
+@jwt_required()
 def get_ride_histories():
     search_query = request.args.get('search', '', type=str)
     start_time_filter = request.args.get('start_time', None, type=str)
@@ -439,6 +424,21 @@ def get_ride_histories():
     return jsonify([r.to_dict() for r in ride_histories])
 
 
+# --------------------- LOGIN ---------------------
+@app.route('/login', methods=['POST'])
+@validate_json(required_fields=['email', 'password'])
+def login():
+    data = request.get_json()
+    user = User.query.filter_by(email=data['email']).first()
 
+    if not user or not user.check_password(data['password']):
+        return jsonify({"error": "Invalid email or password"}), 401
+
+    access_token = create_access_token(identity=user.id)
+    return jsonify({"access_token": access_token, "user": user.to_dict()}), 200
+
+# --------------------- MAIN ---------------------
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
+
+    

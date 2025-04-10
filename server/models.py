@@ -5,6 +5,7 @@ from sqlalchemy import ForeignKey, Enum, Table
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from enum import Enum as PyEnum
+from werkzeug.security import generate_password_hash, check_password_hash
 
 db = SQLAlchemy()
 
@@ -21,6 +22,8 @@ class RequestStatusEnum(PyEnum):
     COMPLETED = "Completed"
     CANCELLED = "Cancelled"
 
+
+
 class User(db.Model, SerializerMixin):
     __tablename__ = 'user'
     
@@ -29,11 +32,20 @@ class User(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(100), unique=True, nullable=False)
+    password_hash = db.Column(db.String(255), nullable=False)  # Store hashed password
     location_lat = db.Column(db.Float)
     location_lng = db.Column(db.Float)
 
     requests = db.relationship('AmbulanceRequest', back_populates='patient')
     ride_histories = db.relationship('RideHistory', back_populates='patient')
+
+    def set_password(self, password):
+        """Hash and set password."""
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        """Check hashed password."""
+        return check_password_hash(self.password_hash, password)
 
     def to_dict(self):
         return {
@@ -188,4 +200,4 @@ class RideHistory(db.Model, SerializerMixin):
             "payment_method": self.payment_method,
             "rating": self.rating,
             "feedback": self.feedback
-        }
+        }  

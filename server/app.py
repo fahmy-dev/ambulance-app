@@ -1,24 +1,24 @@
-import os 
+import os
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from models import db, User, Driver, Hospital, Ambulance, AmbulanceRequest, RideHistory
 from flask_migrate import Migrate
-# from datetime import datetime
+from datetime import timedelta, datetime
 from functools import wraps
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
-from datetime import timedelta, datetime
+
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///ambulance.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['JWT_SECRET_KEY'] = os.urandom(24) # use a secure key in production
+app.config['JWT_SECRET_KEY'] = os.urandom(24)
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)
-jwt = JWTManager(app)
 
+jwt = JWTManager(app)
 CORS(app)
 db.init_app(app)
 migrate = Migrate(app, db)
 
-# Validation decorator
+# ---------------- VALIDATION DECORATOR ----------------
 def validate_json(required_fields=None, optional_fields=None):
     def decorator(f):
         @wraps(f)
@@ -39,7 +39,7 @@ def validate_json(required_fields=None, optional_fields=None):
         return wrapped
     return decorator
 
-# General error handling
+# ---------------- GENERAL ERROR HANDLING ----------------
 @app.errorhandler(Exception)
 def handle_general_error(error):
     return jsonify({"error": "An unexpected error occurred", "details": str(error)}), 500
@@ -63,7 +63,7 @@ def create_user():
         location_lat=data.get('location_lat'),
         location_lng=data.get('location_lng')
     )
-    user.set_password(data['password'])  # Hashing the password before storing it
+    user.set_password(data['password'])
 
     try:
         db.session.add(user)
@@ -73,8 +73,8 @@ def create_user():
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
-
 @app.route('/users', methods=['GET'])
+@jwt_required()
 def get_users():
     try:
         users = User.query.all()
@@ -84,6 +84,7 @@ def get_users():
 
 # --------------------- HOSPITAL ROUTES ---------------------
 @app.route('/hospitals', methods=['POST'])
+@jwt_required()
 @validate_json(required_fields=['name', 'location_lat', 'location_lng'])
 def create_hospital():
     data = request.get_json()
@@ -141,6 +142,7 @@ def delete_hospital(id):
 
 # --------------------- DRIVER ROUTES ---------------------
 @app.route('/drivers', methods=['POST'])
+@jwt_required()
 @validate_json(required_fields=['name', 'contact'])
 def create_driver():
     data = request.get_json()
@@ -171,6 +173,7 @@ def get_drivers():
         return jsonify({"error": str(e)}), 500
 
 @app.route('/drivers/<int:id>', methods=['PATCH'])
+@jwt_required()
 @validate_json(optional_fields=['is_available'])
 def update_driver(id):
     driver = Driver.query.get_or_404(id)
@@ -185,6 +188,7 @@ def update_driver(id):
         return jsonify({"error": str(e)}), 500
 
 @app.route('/drivers/<int:id>', methods=['DELETE'])
+@jwt_required()
 def delete_driver(id):
     driver = Driver.query.get_or_404(id)
     try:
@@ -220,6 +224,7 @@ def create_ambulance():
         return jsonify({"error": str(e)}), 500
 
 @app.route('/ambulances', methods=['GET'])
+@jwt_required()
 def get_ambulances():
     try:
         ambulances = Ambulance.query.all()
@@ -260,7 +265,8 @@ def get_requests():
 
 # --------------------- RIDE HISTORY ROUTES ---------------------
 @app.route('/ride_history', methods=['POST'])
-@validate_json(required_fields=['request_id', 'patient_id', 'hospital_id'])
+@jwt_required()
+@validate_json(required_fields=['request_id', 'patient_id', 'hospital_id', 'ambulance_id', 'start_time', 'end_time', 'total_duration', 'total_cost', 'payment_method'])
 def create_ride_history():
     data = request.get_json()
     try:
@@ -279,13 +285,14 @@ def create_ride_history():
             feedback=data.get('feedback')
         )
         db.session.add(ride)
-        db.session.commit() #save them to db
+        db.session.commit()
         return jsonify(ride.to_dict()), 201
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
 @app.route('/ride_history', methods=['GET'])
+@jwt_required()
 def get_ride_histories():
     try:
         rides = RideHistory.query.all()
@@ -293,18 +300,21 @@ def get_ride_histories():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+# --------------------- LOGIN ---------------------
 @app.route('/login', methods=['POST'])
 @validate_json(required_fields=['email', 'password'])
 def login():
     data = request.get_json()
     user = User.query.filter_by(email=data['email']).first()
-    
+
     if not user or not user.check_password(data['password']):
         return jsonify({"error": "Invalid email or password"}), 401
 
     access_token = create_access_token(identity=user.id)
     return jsonify({"access_token": access_token, "user": user.to_dict()}), 200
 
-
+# --------------------- MAIN ---------------------
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
+
+    

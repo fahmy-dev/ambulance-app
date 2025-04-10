@@ -14,10 +14,8 @@ function AmbulanceRequestForm() {
   const [error, setError] = useState(null);
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
@@ -36,7 +34,7 @@ function AmbulanceRequestForm() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          Authorization: `Bearer ${token}`
         },
         body: JSON.stringify(formData)
       });
@@ -53,7 +51,7 @@ function AmbulanceRequestForm() {
 
       navigate('/my-requests');
     } catch (err) {
-      setError(err.message);
+      setError(err.message || 'Something went wrong');
     } finally {
       setLoading(false);
     }
@@ -63,7 +61,7 @@ function AmbulanceRequestForm() {
     <div className="request-panel">
       <h2>Request an Ambulance</h2>
       {error && <div className="error">{error}</div>}
-      
+
       <form onSubmit={handleSubmit}>
         <div className="form-group">
           <label htmlFor="pickup_location">Pickup Location</label>

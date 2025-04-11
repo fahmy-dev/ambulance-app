@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "1104cb1f92a2e80e785de0a79b5fb00e5be1cb9fd2713d5d08823bcc7596e73f"
+            "sha256": "021c899349a9e603539198768b3da1d21bceaa58174afd6f48f69f2928155700"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -65,6 +65,15 @@
             "index": "pypi",
             "markers": "python_version >= '3.7' and python_version < '4'",
             "version": "==4.5.2"
+        },
+        "flask-marshmallow": {
+            "hashes": [
+                "sha256:00ee96399ed664963afff3b5d6ee518640b0f91dbc2aace2b5abcf32f40ef23a",
+                "sha256:10b5048ecfaa26f7c8d0aed7d81083164450e6be8e81c04b3d4a586b3f7b6678"
+            ],
+            "index": "pypi",
+            "markers": "python_version >= '3.8'",
+            "version": "==1.2.1"
         },
         "flask-migrate": {
             "hashes": [
@@ -269,6 +278,23 @@
             "markers": "python_version >= '3.7'",
             "version": "==2.1.5"
         },
+        "marshmallow": {
+            "hashes": [
+                "sha256:4972f529104a220bb8637d595aa4c9762afbe7f7a77d82dc58c1615d70c5823e",
+                "sha256:71a2dce49ef901c3f97ed296ae5051135fd3febd2bf43afe0ae9a82143a494d9"
+            ],
+            "index": "pypi",
+            "markers": "python_version >= '3.8'",
+            "version": "==3.22.0"
+        },
+        "packaging": {
+            "hashes": [
+                "sha256:09abb1bccd265c01f4a3aa3f7a7db064b36514d2cba19a2f694fe6150451a759",
+                "sha256:c228a6dc5e932d346bc5739379109d49e8853dd8223571c7c5b55260edc0b97f"
+            ],
+            "markers": "python_version >= '3.8'",
+            "version": "==24.2"
+        },
         "psycopg2-binary": {
             "hashes": [
                 "sha256:04392983d0bb89a8717772a193cfaac58871321e3ec69514e1c4e0d4957b5aff",
@@ -425,6 +451,13 @@
             "index": "pypi",
             "markers": "python_version >= '3.7'",
             "version": "==2.0.40"
+        },
+        "sqlalchemy-serializer": {
+            "hashes": [
+                "sha256:5e1f83fc6d8a4f7618100c1b9a6af949498210756b974527ec3c8c1ec7e1300f"
+            ],
+            "index": "pypi",
+            "version": "==1.4.12"
         },
         "typing-extensions": {
             "hashes": [

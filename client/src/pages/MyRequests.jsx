@@ -1,22 +1,32 @@
 import React, { useState, useEffect } from "react";
-import { useAuth } from "../context/AuthContext";
-import api from "../utils/api";
+import { useAuth } from "../context/AuthContext"; // Custom AuthContext for user authentication
+import api from "../utils/api"; // Import the api utility
+import { format } from 'date-fns'; // Add date-fns for date formatting
 
 function MyRequests() {
   const [myRequests, setMyRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { user } = useAuth();
+  const { user } = useAuth(); // Access the logged-in user from context
 
   useEffect(() => {
     const fetchRequests = async () => {
-      if (!user) return;
-      
+      if (!user) return; // Check if user is logged in
+  
       try {
         setLoading(true);
-        // This will now fetch only the current user's requests from the server
-        const requests = await api.requests.getAll();
-        setMyRequests(requests);
+        // Fetch the requests for the current user
+        const response = await api.requests.getAll();
+        
+        // Log the response to check its structure
+        console.log(response);
+  
+        // Ensure the response is ok (status 200)
+        if (!response || !response.data) {
+          throw new Error("No data returned from the server.");
+        }
+  
+        setMyRequests(response.data); // Assuming the response has a 'data' field containing the requests
       } catch (err) {
         console.error("Failed to fetch requests:", err);
         setError("Failed to load your requests. Please try again later.");
@@ -24,9 +34,10 @@ function MyRequests() {
         setLoading(false);
       }
     };
-
+  
     fetchRequests();
-  }, [user]);
+  }, [user]); // Re-run effect when user changes
+  
 
   if (loading) {
     return (
@@ -67,7 +78,7 @@ function MyRequests() {
           <tbody>
             {myRequests.map((req) => (
               <tr key={req.id}>
-                <td>{new Date(req.created_at).toLocaleDateString()}</td>
+                <td>{format(new Date(req.created_at), 'PPP')}</td> {/* Using date-fns to format the date */}
                 <td>{req.hospital ? req.hospital.name : "Unknown"}</td>
                 <td>{calculateDistance(req)} KM</td>
                 <td>{req.payment_method || "N/A"}</td>

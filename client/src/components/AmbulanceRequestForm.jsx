@@ -11,6 +11,7 @@ function AmbulanceRequestForm({ position, onRequestSubmit, onHospitalSelect }) {
   const [paymentMethod, setPaymentMethod] = useState("Cash");
   const [selectedHospital, setSelectedHospital] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null); // Error state
   const searchInputRef = useRef(null);
   
   useEffect(() => {
@@ -20,7 +21,6 @@ function AmbulanceRequestForm({ position, onRequestSubmit, onHospitalSelect }) {
     }
   }, [position, searchTerm]);
   
-  // Pass selected hospital to parent component
   useEffect(() => {
     if (selectedHospital && onHospitalSelect) {
       onHospitalSelect(selectedHospital);
@@ -29,6 +29,7 @@ function AmbulanceRequestForm({ position, onRequestSubmit, onHospitalSelect }) {
   
   const fetchNearbyHospitals = async (position) => {
     setIsLoading(true);
+    setError(null); // Reset error before making the request
     try {
       const [lat, lng] = position;
       const radius = 5000; // 5km radius
@@ -55,7 +56,6 @@ function AmbulanceRequestForm({ position, onRequestSubmit, onHospitalSelect }) {
         const data = await response.json();
         
         const hospitals = data.elements.map((item, index) => {
-          // Get coordinates (different format for nodes vs ways/relations)
           const [itemLat, itemLng] = getCoordinates(item);
           
           return {
@@ -68,16 +68,16 @@ function AmbulanceRequestForm({ position, onRequestSubmit, onHospitalSelect }) {
           };
         });
         
-        // Sort by distance and limit to 5 nearest hospitals
         const sortedHospitals = hospitals
           .sort((a, b) => parseFloat(a.distance) - parseFloat(b.distance))
           .slice(0, 5);
         
         setNearbyHospitals(sortedHospitals);
       } else {
-        console.error("Failed to fetch nearby hospitals");
+        throw new Error("Failed to fetch nearby hospitals");
       }
     } catch (error) {
+      setError("Failed to load hospitals. Please try again later.");
       console.error("Error fetching nearby hospitals:", error);
     } finally {
       setIsLoading(false);
@@ -102,7 +102,7 @@ function AmbulanceRequestForm({ position, onRequestSubmit, onHospitalSelect }) {
     const [lat1, lon1] = point1;
     const [lat2, lon2] = point2;
     
-    const R = 6371; // Radius of the earth in km
+    const R = 6371;
     const dLat = deg2rad(lat2 - lat1);
     const dLon = deg2rad(lon2 - lon1);
     const a = 
@@ -110,7 +110,7 @@ function AmbulanceRequestForm({ position, onRequestSubmit, onHospitalSelect }) {
       Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
       Math.sin(dLon/2) * Math.sin(dLon/2); 
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
-    const distance = R * c; // Distance in km
+    const distance = R * c;
     return distance.toFixed(1);
   };
   
@@ -119,35 +119,24 @@ function AmbulanceRequestForm({ position, onRequestSubmit, onHospitalSelect }) {
   };
   
   const calculateETA = (distance) => {
-    // Assuming average ambulance speed of 60 km/h in urban areas
     const timeInMinutes = Math.round((parseFloat(distance) / 60) * 60);
-    return timeInMinutes < 1 ? 1 : timeInMinutes; // Minimum 1 minute
+    return timeInMinutes < 1 ? 1 : timeInMinutes;
   };
   
   const addToFavorites = (hospital, e) => {
-    e.stopPropagation(); // Prevent triggering the parent onClick
+    e.stopPropagation();
     
-    // Check if hospital is already in favorites
     const existingIndex = hospitals.findIndex(h => h.id === hospital.id);
     if (existingIndex >= 0) return;
     
-    // Create a copy of the hospital with favorite set to true
     const favoriteHospital = { ...hospital, favorite: true };
     
-    // If we already have 2 favorites, remove the oldest one
     if (hospitals.filter(h => h.favorite).length >= 2) {
-      // Get only the favorite hospitals
       const favHospitals = hospitals.filter(h => h.favorite);
-      // Get non-favorite hospitals
       const nonFavHospitals = hospitals.filter(h => !h.favorite);
-      
-      // Remove the first (oldest) favorite and add the new one
       const updatedFavorites = [...favHospitals.slice(1), favoriteHospital];
-      
-      // Combine non-favorites with updated favorites
       setHospitals([...nonFavHospitals, ...updatedFavorites]);
     } else {
-      // Otherwise just add the new favorite
       setHospitals([...hospitals, favoriteHospital]);
     }
   };
@@ -159,7 +148,6 @@ function AmbulanceRequestForm({ position, onRequestSubmit, onHospitalSelect }) {
   
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
-    // Clear selected hospital when user types in search
     if (selectedHospital && e.target.value !== selectedHospital.name) {
       setSelectedHospital(null);
     }
@@ -176,9 +164,13 @@ function AmbulanceRequestForm({ position, onRequestSubmit, onHospitalSelect }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    // Use the selected hospital or default to first favorite
-    const hospital = selectedHospital || hospitals[0];
-    const distance = selectedHospital ? selectedHospital.distance : "3.2";
+    if (!position || !selectedHospital) {
+      setError("Please select a hospital and make sure your location is set.");
+      return;
+    }
+    
+    const hospital = selectedHospital;
+    const distance = selectedHospital.distance;
     const eta = calculateETA(distance);
     
     const requestData = {
@@ -232,7 +224,8 @@ function AmbulanceRequestForm({ position, onRequestSubmit, onHospitalSelect }) {
       />
       
       <div className="hospitals-container">
-        {/* Search results section */}
+        {error && <div className="error-message">{error}</div>}
+        
         {isLoading ? (
           <div className="loading-hospitals">Searching for nearby hospitals...</div>
         ) : (
@@ -244,7 +237,6 @@ function AmbulanceRequestForm({ position, onRequestSubmit, onHospitalSelect }) {
           )
         )}
         
-        {/* Favorites section - always visible */}
         <div className="favourite-hospitals" style={{ marginTop: '20px' }}>
           <h3>Favourite Hospitals</h3>
           {favoriteHospitals.length > 0 ? (
@@ -270,7 +262,7 @@ function AmbulanceRequestForm({ position, onRequestSubmit, onHospitalSelect }) {
       <button 
         type="submit"
         className="request-btn" 
-        disabled={!position || !paymentMethod}
+        disabled={!position || !selectedHospital || !paymentMethod}
       >
         Request
       </button>

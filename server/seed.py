@@ -1,54 +1,110 @@
 from app import app, db
-from models import User, Hospital, Ambulance, AmbulanceRequest, RideHistory
+from models import User, RideHistory, ContactUs, Favorite, RideStatusEnum
+from werkzeug.security import generate_password_hash
 from datetime import datetime
 
+# Clear existing data from the tables
+def clear_data():
+    # Delete all entries from each table
+    db.session.query(Favorite).delete()
+    db.session.query(RideHistory).delete()
+    db.session.query(ContactUs).delete()
+    db.session.query(User).delete()
+    db.session.commit()
 
-with app.app_context():
-    db.drop_all()
-    db.create_all()
-
-# Create some sample users, hospitals, and ambulances
 def seed_data():
-    # Creating Users (patients)
-    user1 = User(name="John Doe", email="john.doe@example.com", location_lat=1.290270, location_lng=36.8219)
-    user1.set_password("password123")  # Set password for user1
-    
-    user2 = User(name="Jane Smith", email="jane.smith@example.com", location_lat=1.3020, location_lng=36.8215)
-    user2.set_password("password123")  # Set password for user2
+    # This is necessary to run the seed script
+    with app.app_context():  # Ensures the app context is available for DB interactions
+        clear_data()
 
-    # Creating Hospitals
-    hospital1 = Hospital(name="City Hospital", location_lat=1.295, location_lng=36.8100, availability=True, contact_info="city@hospital.com")
-    hospital2 = Hospital(name="Central Clinic", location_lat=1.300, location_lng=36.8120, availability=True, contact_info="central@clinic.com")
+        # ----------------- SEED DATA -----------------
+        # Create sample users
+        user1 = User(
+            name="Joy Mutanu",
+            email="joy.mutanu@example.com",
+            password_hash=generate_password_hash('password123')
+        )
 
-    # Creating Ambulances
-    ambulance1 = Ambulance(vehicle_no="AMB001", is_available=True, location_lat=1.2955, location_lng=36.8105, hospital=hospital1)
-    ambulance2 = Ambulance(vehicle_no="AMB002", is_available=True, location_lat=1.3010, location_lng=36.8115, hospital=hospital2)
+        user2 = User(
+            name="Brian Lunga",
+            email="brian.lunga@example.com",
+            password_hash=generate_password_hash('password123')
+        )
 
-    # Adding data to the session
-    db.session.add_all([user1, user2, hospital1, hospital2, ambulance1, ambulance2])
-    db.session.commit()
+        # Add users to the session
+        db.session.add(user1)
+        db.session.add(user2)
 
-    # Creating AmbulanceRequest
-    request1 = AmbulanceRequest(patient_id=user1.id, hospital_id=hospital1.id, ambulance_id=ambulance1.id, 
-                                patient_location_lat=1.290270, patient_location_lng=36.8219, payment_method="Cash", estimated_cost=500.0)
-    request2 = AmbulanceRequest(patient_id=user2.id, hospital_id=hospital2.id, ambulance_id=ambulance2.id, 
-                                patient_location_lat=1.3020, patient_location_lng=36.8215, payment_method="Insurance", estimated_cost=600.0, status="COMPLETED")
+        # Commit to save users to the database
+        db.session.commit()
 
-    db.session.add_all([request1, request2])
-    db.session.commit()
+        # ----------------- SEED RIDE HISTORY -----------------
+        
+        ride1 = RideHistory(
+            user_id=user1.id,
+            hospital_name="City Hospital",
+            payment_method="Credit Card",
+            status=RideStatusEnum.COMPLETED,
+        )
 
-    # Creating RideHistory
-    ride1 = RideHistory(request_id=request1.id, patient_id=user1.id, hospital_id=hospital1.id, ambulance_id=ambulance1.id, 
-                       end_time=datetime.now(), total_duration="30 minutes", total_cost=500.0, payment_method="Cash", rating=5, feedback="Good service")
-    
-    ride2 = RideHistory(request_id=request2.id, patient_id=user2.id, hospital_id=hospital2.id, ambulance_id=ambulance2.id, 
-                        start_time=datetime.now(), end_time=datetime.now(), total_duration="40 minutes", total_cost=600.0, payment_method="Insurance", rating=4, feedback="Satisfactory service")
+        ride2 = RideHistory(
+            user_id=user2.id,
+            hospital_name="Greenwood Hospital",
+            payment_method="Cash",
+            status=RideStatusEnum.PENDING,
+        )
 
-    db.session.add_all([ride1, ride2])
-    db.session.commit()
+        # Add ride histories to the session
+        db.session.add(ride1)
+        db.session.add(ride2)
 
-    print("Data seeded successfully!")
+        # Commit to save ride histories to the database
+        db.session.commit()
 
-if __name__ == "__main__":
-    with app.app_context():
-        seed_data()
+        # ----------------- SEED CONTACT MESSAGES -----------------
+
+        contact1 = ContactUs(
+            name="Alice Wambui",
+            email="alice.wambui@example.com",
+            phone_number="0712345678",
+            message="I have a suggestion to improve the ambulance service."
+        )
+
+        contact2 = ContactUs(
+            name="Tom Muriithi",
+            email="tom.muriithi@example.com",
+            phone_number="0723456789",
+            message="I had a great experience using the ambulance service, thank you!"
+        )
+
+        # Add contact messages to the session
+        db.session.add(contact1)
+        db.session.add(contact2)
+
+        # Commit to save contact messages to the database
+        db.session.commit()
+
+        # ----------------- SEED FAVORITES -----------------
+
+        favorite1 = Favorite(
+            user_id=user1.id,
+            hospital_name="City Hospital"
+        )
+
+        favorite2 = Favorite(
+            user_id=user2.id,
+            hospital_name="Greenwood Hospital"
+        )
+
+        # Add favorites to the session
+        db.session.add(favorite1)
+        db.session.add(favorite2)
+
+        # Commit to save favorites to the database
+        db.session.commit()
+
+        print("Database seeded successfully!")
+
+# Call seed_data() to run the script
+if __name__ == '__main__':
+    seed_data()

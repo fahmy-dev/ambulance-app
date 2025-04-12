@@ -34,9 +34,14 @@ async function fetchApi(endpoint, options = {}) {
     
     // Handle non-2xx responses
     if (!response.ok) {
-      if (response.status === 401) {
-        // Redirect to login if unauthorized
-        window.location.href = "/login";
+      if (response.status === 401 && endpoint === "/login") {
+        // For login endpoint, don't redirect, just throw an error to be handled by the login form
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Invalid email or password");
+      } else if (response.status === 401) {
+        // For other endpoints, redirect to auth when unauthorized
+        window.location.href = "/auth";
+        return; // Stop execution after redirect
       }
       const errorData = await response.json().catch(() => ({}));
       throw new Error(errorData.error || `API error: ${response.status}`);
@@ -108,7 +113,7 @@ export const auth = {
   getCurrentUser: () => fetchApi("/me"),
   logout: () => {
     localStorage.removeItem("token"); // Logout logic to clear token
-    window.location.href = "/login";  // Redirect to login
+    window.location.href = "/auth";  // Redirect to auth instead of login
   }
 };
 

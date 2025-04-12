@@ -43,24 +43,34 @@ function Auth() {
       if (isLogin) {
         // Login logic
         console.log("Attempting login with:", values.email);
-        await login({
+        const user = await login({
           email: values.email,
           password: values.password
         });
-        navigate("/home");
+        
+        if (user) {
+          navigate("/home");
+        } else {
+          setFormError("Invalid email or password.");
+        }
       } else {
         // Register logic
         console.log("Attempting registration with:", values.email);
-        await register({
+        const user = await register({
           name: values.name,
           email: values.email,
           password: values.password
         });
-        navigate("/home");
+        
+        if (user) {
+          navigate("/home");
+        } else {
+          setFormError("Registration failed. Please try again.");
+        }
       }
     } catch (error) {
       console.error("Auth error:", error);
-      setFormError(error.message || "Authentication failed. Please try again.");
+      setFormError("Invalid email or password.");
     } finally {
       setSubmitting(false);
     }

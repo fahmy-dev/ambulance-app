@@ -25,8 +25,13 @@ function LoginForm({ onSuccess, onToggleForm }) {
       const userData = await login({ email, password });
       
       // Success case - pass user data to parent component
-      onSuccess(userData);
+      if (userData) {
+        onSuccess(userData);
+      } else {
+        setError("Login failed. Please check your credentials.");
+      }
     } catch (err) {
+      console.error("Login error:", err);
       setError(err.message || "Invalid email or password. Please try again.");
     } finally {
       setIsLoading(false);

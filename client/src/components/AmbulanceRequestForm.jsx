@@ -1,26 +1,18 @@
 import React, { useState, useEffect, useRef } from "react";
-import api from "../utils/api"; // Add this import
+import api from "../utils/api";
+import { useAuth } from "../context/AuthContext"; // Add this import
 
 function AmbulanceRequestForm({ position, onRequestSubmit, onHospitalSelect }) {
-  const [hospitals, setHospitals] = useState([
-    { id: 1, name: "Hospital A", favorite: true },
-    { id: 2, name: "Hospital B", favorite: true },
-  ]);
-  
+  // Remove the static hospitals state
   const [nearbyHospitals, setNearbyHospitals] = useState([]);
+  const [favorites, setFavorites] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("Cash");
   const [selectedHospital, setSelectedHospital] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null); // Error state
+  const { user } = useAuth();
   const searchInputRef = useRef(null);
-  
-  useEffect(() => {
-    const isUserTyping = document.activeElement === searchInputRef.current;
-    if (position && searchTerm.length > 0 && isUserTyping) {
-      fetchNearbyHospitals(position);
-    }
-  }, [position, searchTerm]);
   
   useEffect(() => {
     const isUserTyping = document.activeElement === searchInputRef.current;
@@ -297,30 +289,82 @@ function AmbulanceRequestForm({ position, onRequestSubmit, onHospitalSelect }) {
     return hospitals.some(h => h.id === hospitalId && h.favorite);
   };
   
+  // Update the renderHospitalItem function to use favorites instead of hospitals
   const renderHospitalItem = (hospital, isInSearchResults = false) => (
     <div 
-      key={hospital.id} 
-      className={`hospital-item ${selectedHospital && selectedHospital.id === hospital.id ? 'selected' : ''}`}
+      key={hospital.id || hospital.hospital_name} 
+      className={`hospital-item ${selectedHospital && (selectedHospital.id === hospital.id || selectedHospital.name === hospital.hospital_name) ? 'selected' : ''}`}
       onClick={() => handleHospitalSelect(hospital)}
     >
       <div className="hospital-info">
         <span 
-          className={`star-icon ${isFavorite(hospital.id) ? 'favorite' : ''}`}
-          onClick={(e) => addToFavorites(hospital, e)}
+          className={`star-icon ${favorites.some(f => f.hospital_name === (hospital.name || hospital.hospital_name)) ? 'favorite' : ''}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            toggleFavorite(hospital);
+          }}
         >
           ★
         </span>
         <div className="hospital-details">
-          <span className="hospital-name">{hospital.name}</span>
-          <span className="hospital-type">{hospital.type}</span>
+          <span className="hospital-name">{hospital.name || hospital.hospital_name}</span>
+          {hospital.type && <span className="hospital-type">{hospital.type}</span>}
         </div>
       </div>
       {isInSearchResults && <span className="hospital-distance">{hospital.distance} km</span>}
     </div>
   );
+
+  // Fetch favorites when component mounts if user is logged in
+  useEffect(() => {
+    if (user) {
+      fetchUserFavorites();
+    }
+  }, [user]);
   
-  const favoriteHospitals = hospitals.filter(h => h.favorite);
+  const fetchUserFavorites = async () => {
+    try {
+      const response = await api.favorites.getAll();
+      setFavorites(response);
+    } catch (error) {
+      console.error("Failed to fetch favorites:", error);
+      setError("Failed to load favorite hospitals");
+    }
+  };
   
+  // Remove addToFavorites function as it's no longer needed
+  // Remove isFavorite function as it's no longer needed
+
+  const toggleFavorite = async (hospital) => {
+    if (!user) {
+      alert("Please log in to save favorites");
+      return;
+    }
+  
+    try {
+      const isFavorite = favorites.some(fav => 
+        fav.hospital_name === (hospital.name || hospital.hospital_name)
+      );
+      
+      if (isFavorite) {
+        const favoriteToRemove = favorites.find(fav => 
+          fav.hospital_name === (hospital.name || hospital.hospital_name)
+        );
+        await api.favorites.remove({ id: favoriteToRemove.id });
+        setFavorites(favorites.filter(fav => 
+          fav.hospital_name !== (hospital.name || hospital.hospital_name)
+        ));
+      } else {
+        const response = await api.favorites.add({ 
+          hospital_name: hospital.name || hospital.hospital_name 
+        });
+        setFavorites([...favorites, response]);
+      }
+    } catch (error) {
+      console.error("Failed to update favorite:", error);
+    }
+  };
+
   return (
     <form onSubmit={handleSubmit}>
       <input
@@ -346,12 +390,19 @@ function AmbulanceRequestForm({ position, onRequestSubmit, onHospitalSelect }) {
           )
         )}
         
+        {/* Show favorites section always, but with different content based on login status */}
         <div className="favourite-hospitals" style={{ marginTop: '20px' }}>
           <h3>Favourite Hospitals</h3>
-          {favoriteHospitals.length > 0 ? (
-            favoriteHospitals.map(hospital => renderHospitalItem(hospital))
+          {user ? (
+            favorites.length > 0 ? (
+              favorites.map(hospital => renderHospitalItem(hospital))
+            ) : (
+              <div className="no-favorites">No favorite hospitals yet</div>
+            )
           ) : (
-            <div className="no-favorites">No favorite hospitals yet</div>
+            <div className="login-prompt">
+              Please log in to save and view your favorite hospitals
+            </div>
           )}
         </div>
       </div>

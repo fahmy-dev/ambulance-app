@@ -56,90 +56,84 @@ async function fetchApi(endpoint, options = {}) {
   }
 }
 
-// Ride history API - Updated to match server endpoint
-export const rideHistory = {
-  getAll: () => fetchApi("/ride_history"),
-  create: (historyData) => fetchApi("/ride_history", {
-    method: "POST",
-    body: JSON.stringify(historyData)
-  }),
-  getById: (id) => fetchApi(`/ride_history/${id}`),
-  update: (id, data) => fetchApi(`/ride_history/${id}`, {
-    method: "PATCH",
-    body: JSON.stringify(data)
-  }),
-  delete: (id) => fetchApi(`/ride_history/${id}`, { method: "DELETE" }),
-  search: (query) => fetchApi(`/ride_history/search?search=${query}`)
-};
-
-// Contact Us API
-export const contactUs = {
-  create: (contactData) => fetchApi("/contact_us", {
-    method: "POST",
-    body: JSON.stringify(contactData)
-  }),
-  getAll: () => fetchApi("/contact_us")
-};
-
-// Favorites API
-export const favorites = {
-  getAll: () => fetchApi("/favorites"),
-  create: (favoriteData) => fetchApi("/favorites", {
-    method: "POST",
-    body: JSON.stringify(favoriteData)
-  }),
-  delete: (id) => fetchApi(`/favorites/${id}`, { method: "DELETE" })
-};
-
-// Add requests API that points to ride_history endpoints
-export const requests = {
-  getAll: () => fetchApi("/ride_history"),
-  getById: (id) => fetchApi(`/ride_history/${id}`),
-  create: (requestData) => {
-    // Transform the data to match what the server expects for request-ambulance
-    const transformedData = {
-      hospital_name: requestData.hospital_name,
-      payment_method: requestData.payment_method || requestData.payment,
-      date: new Date().toLocaleString() // Add local date and time
-    };
-    
-    return fetchApi("/request-ambulance", {
+// Combine all API endpoints into a single object
+const api = {
+  rideHistory: {
+    getAll: () => fetchApi("/ride_history"),
+    create: (historyData) => fetchApi("/ride_history", {
       method: "POST",
-      body: JSON.stringify(transformedData)
-    });
+      body: JSON.stringify(historyData)
+    }),
+    getById: (id) => fetchApi(`/ride_history/${id}`),
+    update: (id, data) => fetchApi(`/ride_history/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(data)
+    }),
+    delete: (id) => fetchApi(`/ride_history/${id}`, { method: "DELETE" }),
+    search: (query) => fetchApi(`/ride_history/search?search=${query}`)
   },
-  update: (id, data) => fetchApi(`/ride_history/${id}`, {
-    method: "PATCH",
-    body: JSON.stringify(data)
-  }),
-  delete: (id) => fetchApi(`/ride_history/${id}`, { method: "DELETE" })
-};
 
-// Auth API
-export const auth = {
-  login: (credentials) => fetchApi("/login", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Accept": "application/json"
+  contactUs: {
+    create: (contactData) => fetchApi("/contact_us", {
+      method: "POST",
+      body: JSON.stringify(contactData)
+    }),
+    getAll: () => fetchApi("/contact_us")
+  },
+
+  favorites: {
+    getAll: () => fetchApi("/favorites"),
+    add: (data) => fetchApi("/favorites", {
+      method: "POST",
+      body: JSON.stringify(data)
+    }),
+    remove: (data) => fetchApi("/favorites", {
+      method: "DELETE",
+      body: JSON.stringify(data)
+    })
+  },
+
+  requests: {
+    getAll: () => fetchApi("/ride_history"),
+    getById: (id) => fetchApi(`/ride_history/${id}`),
+    create: (requestData) => {
+      const transformedData = {
+        hospital_name: requestData.hospital_name,
+        payment_method: requestData.payment_method || requestData.payment,
+        date: new Date().toLocaleString()
+      };
+      return fetchApi("/request-ambulance", {
+        method: "POST",
+        body: JSON.stringify(transformedData)
+      });
     },
-    body: JSON.stringify(credentials)
-  }),
-  register: (userData) => fetchApi("/signup", {
-    method: "POST",
-    body: JSON.stringify(userData)
-  }),
-  getCurrentUser: () => fetchApi("/me"),
-  logout: () => {
-    localStorage.removeItem("token"); // Logout logic to clear token
-    window.location.href = "/auth";  // Redirect to auth instead of login
+    update: (id, data) => fetchApi(`/ride_history/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(data)
+    }),
+    delete: (id) => fetchApi(`/ride_history/${id}`, { method: "DELETE" })
+  },
+
+  auth: {
+    login: (credentials) => fetchApi("/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      body: JSON.stringify(credentials)
+    }),
+    register: (userData) => fetchApi("/signup", {
+      method: "POST",
+      body: JSON.stringify(userData)
+    }),
+    getCurrentUser: () => fetchApi("/me"),
+    logout: () => {
+      localStorage.removeItem("token");
+      window.location.href = "/auth";
+    }
   }
 };
 
-export default {
-  rideHistory,
-  contactUs,
-  favorites,
-  auth,
-  requests // Add requests to the default export
-};
+// Single default export
+export default api;

@@ -884,4 +884,14 @@ form {
   to { opacity: 1; transform: translateY(0); }
 }
 
+.login-prompt {
+  text-align: center;
+  padding: 20px;
+  color: var(--text-light);
+  background: var(--primary-light);
+  border-radius: 6px;
+  font-style: italic;
+  border: 1px dashed var(--primary);
+}
+
 

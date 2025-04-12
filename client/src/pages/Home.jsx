@@ -4,6 +4,8 @@ import "leaflet/dist/leaflet.css";
 import { useMapEvents } from "react-leaflet";
 import AmbulanceRequestForm from "../components/AmbulanceRequestForm";
 import RequestConfirmationPanel from "../components/RequestConfirmationPanel";
+import api from "../utils/api";
+import { useAuth } from "../context/AuthContext"; // Add this import
 
 // Component to handle location updates
 function LocationMarker({ position, setPosition, selectedHospital }) {
@@ -52,32 +54,68 @@ function Home() {
   const [selectedHospital, setSelectedHospital] = useState(null);
   const [locationError, setLocationError] = useState(null);
   const defaultPosition = [-1.286389, 36.817223]; // Nairobi coordinates
+  const { user } = useAuth(); // Add this to check if user is logged in
 
   useEffect(() => {
+    // Immediately set default position to ensure map always loads
+    setPosition(defaultPosition);
+    
+    // Reduce initial loading time
+    setTimeout(() => {
+      if (loading) {
+        setLoading(false);
+      }
+    }, 2000);
+    
     if (navigator.geolocation) {
-      setLoading(true);
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setPosition([position.coords.latitude, position.coords.longitude]);
-          setLoading(false);
-          setLocationError(null);
-        },
-        (error) => {
-          console.error("Error getting location:", error);
-          setLocationError("Could not access your location. Using default location instead.");
-          setPosition(defaultPosition);
-          setLoading(false);
-        },
-        { 
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 0
-        }
-      );
+      try {
+        // Try to get precise location with a timeout
+        const locationTimeout = setTimeout(() => {
+          if (loading) {
+            console.log("Location request timed out, using default position");
+            setLoading(false);
+            setLocationError("Location request timed out. Using default location.");
+          }
+        }, 5000);
+        
+        // Use watchPosition instead of getCurrentPosition for better reliability
+        const watchId = navigator.geolocation.watchPosition(
+          (position) => {
+            clearTimeout(locationTimeout);
+            setPosition([position.coords.latitude, position.coords.longitude]);
+            setLoading(false);
+            setLocationError(null);
+            
+            // Once we get a good position, stop watching
+            navigator.geolocation.clearWatch(watchId);
+          },
+          (error) => {
+            clearTimeout(locationTimeout);
+            console.error("Error getting location:", error);
+            setLocationError("Could not access your location. Using default location instead.");
+            setLoading(false);
+          },
+          { 
+            enableHighAccuracy: false, // Set to false for better compatibility
+            timeout: 10000,
+            maximumAge: 300000 // Allow cached positions up to 5 minutes old
+          }
+        );
+        
+        // Clean up the watch when component unmounts
+        return () => {
+          navigator.geolocation.clearWatch(watchId);
+          clearTimeout(locationTimeout);
+        };
+      } catch (e) {
+        // Handle any unexpected errors in the geolocation API
+        console.error("Unexpected geolocation error:", e);
+        setLocationError("An unexpected error occurred. Using default location.");
+        setLoading(false);
+      }
     } else {
       setLocationError("Geolocation is not supported by your browser. Using default location.");
       console.error("Geolocation is not supported by this browser");
-      setPosition(defaultPosition);
       setLoading(false);
     }
   }, []);
@@ -85,12 +123,41 @@ function Home() {
   const handleRequestSubmit = (data) => {
     const distance = calculateDistance(position, data.hospital);
     
-    setRequestData({
+    const formattedData = {
       ...data,
       distance: `${distance.toFixed(1)} KM`,
       eta: calculateETA(distance)
-    });
+    };
     
+    setRequestData(formattedData);
+    
+    // Only make the API call if the user is logged in
+    if (user) {
+      const apiData = {
+        hospital_name: data.hospital.name,
+        payment_method: data.paymentMethod,
+        date: new Date().toLocaleString()
+      };
+      
+      api.requests.create(apiData)
+        .then(response => {
+          console.log("Ambulance request created:", response);
+        })
+        .catch(err => {
+          console.error("Failed to create ambulance request:", err);
+        });
+    } else {
+      // For non-logged in users, store the request in localStorage
+      localStorage.setItem("pendingRequest", JSON.stringify({
+        hospital_name: data.hospital.name,
+        payment_method: data.paymentMethod,
+        date: new Date().toLocaleString()
+      }));
+      
+      console.log("Request saved locally. User will need to log in to complete.");
+    }
+    
+    // Show confirmation regardless of login status
     setShowConfirmation(true);
   };
   

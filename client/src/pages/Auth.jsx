@@ -7,16 +7,25 @@ import SignupForm from "../components/SignupForm";
 function Auth() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { login, register, user } = useAuth();
+  const { login, register, user, processTempRequest } = useAuth();
   const [isLogin, setIsLogin] = useState(location.state?.mode !== "register");
   const [formError, setFormError] = useState("");
+
+  // Get return URL from location state or sessionStorage
+  const returnUrl = location.state?.returnUrl || sessionStorage.getItem('returnAfterAuth') || "/home";
 
   // Redirect if already logged in
   useEffect(() => {
     if (user) {
-      navigate("/home");
+      // Process any temporary request data
+      processTempRequest().then(() => {
+        // Clear the stored return URL
+        sessionStorage.removeItem('returnAfterAuth');
+        // Navigate to the return URL
+        navigate(returnUrl);
+      });
     }
-  }, [user, navigate]);
+  }, [user, navigate, processTempRequest, returnUrl]);
 
   const handleLoginSubmit = async (values, { setSubmitting }) => {
     setFormError("");
@@ -28,7 +37,7 @@ function Auth() {
       });
       
       if (user) {
-        navigate("/home");
+        // The useEffect will handle the redirect
       } else {
         setFormError("Invalid email or password.");
       }
@@ -51,7 +60,7 @@ function Auth() {
       });
       
       if (user) {
-        navigate("/home");
+        // The useEffect will handle the redirect
       } else {
         setFormError("Registration failed. Please try again.");
       }

@@ -277,26 +277,20 @@ function AmbulanceRequestForm({ position, onRequestSubmit, onHospitalSelect }) {
       eta: eta
     };
     
-    // Send the request to the server
-    api.requests.create(requestData)
-      .then(response => {
-        console.log("Ambulance request created:", response);
-        
-        // Pass the full data including the response from server to the parent component
-        if (onRequestSubmit) {
-          onRequestSubmit({
-            ...requestData,
-            id: response.id,
-            hospital,
-            position,
-            timestamp: new Date().toISOString()
-          });
-        }
-      })
-      .catch(err => {
-        console.error("Failed to create ambulance request:", err);
-        setError("Failed to send request. Please try again.");
+    // Instead of making the API call directly, pass the data to the parent component
+    if (onRequestSubmit) {
+      onRequestSubmit({
+        ...requestData,
+        id: "temp-" + Date.now(), // Generate a temporary ID
+        hospital,
+        position,
+        paymentMethod, // Make sure paymentMethod is included
+        timestamp: new Date().toISOString()
       });
+    }
+    
+    // We're not making the API call here anymore
+    // The parent component (Home.jsx) will handle showing the confirmation
   };
   
   const isFavorite = (hospitalId) => {

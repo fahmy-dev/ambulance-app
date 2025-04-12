@@ -1,8 +1,10 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 function RequestConfirmationPanel({ requestData, visible }) {
   const navigate = useNavigate();
+  const { user, saveTempRequest } = useAuth();
   
   if (!visible || !requestData) return null;
   
@@ -25,6 +27,37 @@ function RequestConfirmationPanel({ requestData, visible }) {
     { label: "Time", value: formatTime() }
   ];
   
+  const handleViewRequests = () => {
+    if (!user) {
+      // Save request data to localStorage as fallback
+      const tempRequestData = {
+        hospital: requestData.hospital,
+        paymentMethod: requestData.paymentMethod,
+        timestamp: new Date().toISOString()
+      };
+
+      // Try to use context function, fallback to localStorage
+      if (typeof saveTempRequest === 'function') {
+        saveTempRequest(tempRequestData);
+      } else {
+        localStorage.setItem('tempRequest', JSON.stringify(tempRequestData));
+      }
+      
+      // Store return URL
+      sessionStorage.setItem('returnAfterAuth', '/my-requests');
+      
+      // Redirect to auth
+      navigate("/auth", { 
+        state: { 
+          returnUrl: "/my-requests",
+          mode: "login"
+        } 
+      });
+    } else {
+      navigate("/my-requests");
+    }
+  };
+  
   return (
     <div className="request-confirmation">
       <div className="confirmation-header">
@@ -44,7 +77,7 @@ function RequestConfirmationPanel({ requestData, visible }) {
       
       <button 
         className="view-requests-btn" 
-        onClick={() => navigate("/my-requests")}
+        onClick={handleViewRequests}
       >
         View My Requests
       </button>

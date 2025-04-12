@@ -1,17 +1,16 @@
 import React, { useState, useEffect } from "react";
-import { useAuth } from "../context/AuthContext"; // Custom AuthContext for user authentication
-import api from "../utils/api"; // Import the api utility
-import { format } from 'date-fns'; // Add date-fns for date formatting
+import { useAuth } from "../context/AuthContext";
+import api from "../utils/api";
 
 function MyRequests() {
   const [myRequests, setMyRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { user } = useAuth(); // Access the logged-in user from context
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchRequests = async () => {
-      if (!user) return; // Check if user is logged in
+      if (!user) return;
   
       try {
         setLoading(true);
@@ -21,12 +20,8 @@ function MyRequests() {
         // Log the response to check its structure
         console.log(response);
   
-        // Ensure the response is ok (status 200)
-        if (!response || !response.data) {
-          throw new Error("No data returned from the server.");
-        }
-  
-        setMyRequests(response.data); // Assuming the response has a 'data' field containing the requests
+        // The server returns the array directly, not wrapped in a data property
+        setMyRequests(response);
       } catch (err) {
         console.error("Failed to fetch requests:", err);
         setError("Failed to load your requests. Please try again later.");
@@ -36,9 +31,22 @@ function MyRequests() {
     };
   
     fetchRequests();
-  }, [user]); // Re-run effect when user changes
+  }, [user]);
   
-
+  // Format date function (in case the server doesn't provide formatted_date)
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    
+    const date = new Date(dateString);
+    return date.toLocaleString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+  
   if (loading) {
     return (
       <div className="my-requests-page">
@@ -61,7 +69,7 @@ function MyRequests() {
     <div className="my-requests-page">
       <h1 className="page-title">My Ambulance Requests</h1>
       <p className="page-subtitle">
-        Here you can view the status of your recent ambulance requests.
+        Here you can view your recent ambulance requests.
       </p>
 
       {myRequests.length > 0 ? (
@@ -70,23 +78,17 @@ function MyRequests() {
             <tr>
               <th>ID</th>
               <th>Hospital</th>
-              <th>Date</th>
               <th>Payment</th>
-              <th>Status</th>
+              <th>Date & Time</th>
             </tr>
           </thead>
           <tbody>
             {myRequests.map((req) => (
               <tr key={req.id}>
-                <td>{format(new Date(req.created_at), 'PPP')}</td> {/* Using date-fns to format the date */}
-                <td>{req.hospital ? req.hospital.name : "Unknown"}</td>
-                <td>{calculateDistance(req)} KM</td>
+                <td>{req.id}</td>
+                <td>{req.hospital_name}</td>
                 <td>{req.payment_method || "N/A"}</td>
-                <td>
-                  <span className={`status-${req.status.toLowerCase().replace(/\s+/g, '-')}`}>
-                    {req.status}
-                  </span>
-                </td>
+                <td>{req.formatted_date || formatDate(req.date)}</td>
               </tr>
             ))}
           </tbody>
@@ -96,33 +98,6 @@ function MyRequests() {
       )}
     </div>
   );
-}
-
-// Helper function to calculate distance
-function calculateDistance(request) {
-  if (!request.patient_location_lat || !request.hospital) return "N/A";
-  
-  const lat1 = request.patient_location_lat;
-  const lon1 = request.patient_location_lng;
-  const lat2 = request.hospital.location_lat;
-  const lon2 = request.hospital.location_lng;
-  
-  // Simple distance calculation (Haversine formula)
-  const R = 6371; // Radius of the earth in km
-  const dLat = deg2rad(lat2 - lat1);
-  const dLon = deg2rad(lon2 - lon1);
-  const a = 
-    Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
-    Math.sin(dLon/2) * Math.sin(dLon/2); 
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
-  const distance = R * c; // Distance in km
-  
-  return distance.toFixed(1);
-}
-
-function deg2rad(deg) {
-  return deg * (Math.PI/180);
 }
 
 export default MyRequests;

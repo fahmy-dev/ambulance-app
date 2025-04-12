@@ -1,7 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
+import api from "../utils/api"; // Import the updated API utility
 
 function ContactUs() {
+  const [submitSuccess, setSubmitSuccess] = useState(false);
   const initialValues = {
     name: "",
     phone: "",
@@ -15,9 +17,11 @@ function ContactUs() {
     if (!values.name) {
       errors.name = "Name is required";
     }
-    
-    if (!values.phone) {
+  
+    if(!values.phone) {
       errors.phone = "Phone number is required";
+    } else if (!/^\d{10}$/.test(values.phone)) {
+      errors.phone = "Invalid phone number";
     }
     
     if (!values.email) {
@@ -33,20 +37,58 @@ function ContactUs() {
     return errors;
   };
 
-  const handleSubmit = (values, { setSubmitting, resetForm }) => {
-    console.log("Form submitted:", values);
-    // Here you would typically send the data to your backend
-    setTimeout(() => {
-      alert("Thank you for contacting us! We will get back to you soon.");
-      setSubmitting(false);
+  const handleSubmit = async (values, { setSubmitting, resetForm }) => {
+    try {
+      // Format the data to match the server model
+      const contactData = {
+        name: values.name,
+        email: values.email,
+        phone_number: values.phone || "", // Phone is optional in the server model
+        message: values.message
+      };
+      
+      console.log("Sending contact data:", contactData);
+      
+      // Send data to the server using fetch directly to debug
+      const response = await fetch("http://localhost:5000/contact_us", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(contactData)
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to submit form");
+      }
+      
+      // Show success message
+      setSubmitSuccess(true);
       resetForm();
-    }, 1000);
+      
+      // Hide success message after 5 seconds
+      setTimeout(() => {
+        setSubmitSuccess(false);
+      }, 5000);
+    } catch (error) {
+      console.error("Failed to submit contact form:", error);
+      alert("Failed to submit your message. Please try again later.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
     <div className="contact-page">
       <h1 className="contact-title">Contact Us</h1>
       <p className="contact-subtitle">We'd love to hear from you</p>
+      
+      {submitSuccess && (
+        <div className="success-message">
+          Thank you for contacting us! We will get back to you soon.
+        </div>
+      )}
       
       <Formik
         initialValues={initialValues}
@@ -61,7 +103,7 @@ function ContactUs() {
                 type="text" 
                 id="name" 
                 name="name" 
-                placeholder="Value" 
+                placeholder="Your name" 
               />
               <ErrorMessage name="name" component="div" className="error-message" />
             </div>
@@ -72,7 +114,7 @@ function ContactUs() {
                 type="tel" 
                 id="phone" 
                 name="phone" 
-                placeholder="Value" 
+                placeholder="Your phone number" 
               />
               <ErrorMessage name="phone" component="div" className="error-message" />
             </div>
@@ -83,7 +125,7 @@ function ContactUs() {
                 type="email" 
                 id="email" 
                 name="email" 
-                placeholder="Value" 
+                placeholder="Your email" 
               />
               <ErrorMessage name="email" component="div" className="error-message" />
             </div>
@@ -94,7 +136,7 @@ function ContactUs() {
                 as="textarea" 
                 id="message" 
                 name="message" 
-                placeholder="Value" 
+                placeholder="Your message" 
                 rows="4"
               />
               <ErrorMessage name="message" component="div" className="error-message" />

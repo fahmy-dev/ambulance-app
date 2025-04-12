@@ -50,23 +50,32 @@ function Home() {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [requestData, setRequestData] = useState(null);
   const [selectedHospital, setSelectedHospital] = useState(null);
+  const [locationError, setLocationError] = useState(null);
   const defaultPosition = [-1.286389, 36.817223]; // Nairobi coordinates
 
   useEffect(() => {
     if (navigator.geolocation) {
+      setLoading(true);
       navigator.geolocation.getCurrentPosition(
         (position) => {
           setPosition([position.coords.latitude, position.coords.longitude]);
           setLoading(false);
+          setLocationError(null);
         },
         (error) => {
           console.error("Error getting location:", error);
+          setLocationError("Could not access your location. Using default location instead.");
           setPosition(defaultPosition);
           setLoading(false);
         },
-        { enableHighAccuracy: true }
+        { 
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
+        }
       );
     } else {
+      setLocationError("Geolocation is not supported by your browser. Using default location.");
       console.error("Geolocation is not supported by this browser");
       setPosition(defaultPosition);
       setLoading(false);
@@ -101,6 +110,11 @@ function Home() {
   return (
     <div className="home">
       <h1>Ambulance App</h1>
+      {locationError && (
+        <div className="error-message location-error">
+          {locationError}
+        </div>
+      )}
       <div className="main-content">
         <div className="map-area">
           <div className="map-placeholder">

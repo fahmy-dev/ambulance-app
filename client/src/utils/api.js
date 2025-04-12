@@ -1,6 +1,6 @@
 
 // API utility for making requests to the server
-const API_URL = "http://localhost:5555"; // Your Flask server URL
+const API_URL = "http://localhost:5000"; // Changed from 5555 to 5000 to match your server
 
 // Helper function for making API requests
 async function fetchApi(endpoint, options = {}) {
@@ -26,6 +26,7 @@ async function fetchApi(endpoint, options = {}) {
   const config = {
     ...options,
     headers,
+    mode: 'cors',  // Replace credentials with mode
     body: options.body
   };
 
@@ -55,55 +56,73 @@ async function fetchApi(endpoint, options = {}) {
   }
 }
 
-// Ambulance requests API
-export const ambulanceRequests = {
-  getAll: () => fetchApi("/ambulance-requests"),
-  getById: (id) => fetchApi(`/ambulance-requests/${id}`),
-  create: (requestData) => fetchApi("/ambulance-requests", {
-    method: "POST",
-    body: JSON.stringify(requestData)
-  }),
-  update: (id, data) => fetchApi(`/ambulance-requests/${id}`, {
-    method: "PATCH",
-    body: JSON.stringify(data)
-  }),
-  delete: (id) => fetchApi(`/ambulance-requests/${id}`, { method: "DELETE" })
-};
-
-// Hospitals API
-export const hospitals = {
-  getAll: () => fetchApi("/hospitals"),
-  getById: (id) => fetchApi(`/hospitals/${id}`),
-  create: (hospitalData) => fetchApi("/hospitals", {
-    method: "POST",
-    body: JSON.stringify(hospitalData)
-  }),
-  update: (id, data) => fetchApi(`/hospitals/${id}`, {
-    method: "PATCH",
-    body: JSON.stringify(data)
-  }),
-  delete: (id) => fetchApi(`/hospitals/${id}`, { method: "DELETE" })
-};
-
-// Ride history API
+// Ride history API - Updated to match server endpoint
 export const rideHistory = {
-  getAll: () => fetchApi("/ride-history"),
-  create: (historyData) => fetchApi("/ride-history", {
+  getAll: () => fetchApi("/ride_history"),
+  create: (historyData) => fetchApi("/ride_history", {
     method: "POST",
     body: JSON.stringify(historyData)
   }),
-  getById: (id) => fetchApi(`/ride-history/${id}`),
-  update: (id, data) => fetchApi(`/ride-history/${id}`, {
+  getById: (id) => fetchApi(`/ride_history/${id}`),
+  update: (id, data) => fetchApi(`/ride_history/${id}`, {
     method: "PATCH",
     body: JSON.stringify(data)
   }),
-  delete: (id) => fetchApi(`/ride-history/${id}`, { method: "DELETE" })
+  delete: (id) => fetchApi(`/ride_history/${id}`, { method: "DELETE" }),
+  search: (query) => fetchApi(`/ride_history/search?search=${query}`)
+};
+
+// Contact Us API
+export const contactUs = {
+  create: (contactData) => fetchApi("/contact_us", {
+    method: "POST",
+    body: JSON.stringify(contactData)
+  }),
+  getAll: () => fetchApi("/contact_us")
+};
+
+// Favorites API
+export const favorites = {
+  getAll: () => fetchApi("/favorites"),
+  create: (favoriteData) => fetchApi("/favorites", {
+    method: "POST",
+    body: JSON.stringify(favoriteData)
+  }),
+  delete: (id) => fetchApi(`/favorites/${id}`, { method: "DELETE" })
+};
+
+// Add requests API that points to ride_history endpoints
+export const requests = {
+  getAll: () => fetchApi("/ride_history"),
+  getById: (id) => fetchApi(`/ride_history/${id}`),
+  create: (requestData) => {
+    // Transform the data to match what the server expects for request-ambulance
+    const transformedData = {
+      hospital_name: requestData.hospital_name,
+      payment_method: requestData.payment_method || requestData.payment,
+      date: new Date().toLocaleString() // Add local date and time
+    };
+    
+    return fetchApi("/request-ambulance", {
+      method: "POST",
+      body: JSON.stringify(transformedData)
+    });
+  },
+  update: (id, data) => fetchApi(`/ride_history/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(data)
+  }),
+  delete: (id) => fetchApi(`/ride_history/${id}`, { method: "DELETE" })
 };
 
 // Auth API
 export const auth = {
   login: (credentials) => fetchApi("/login", {
     method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Accept": "application/json"
+    },
     body: JSON.stringify(credentials)
   }),
   register: (userData) => fetchApi("/signup", {
@@ -118,8 +137,9 @@ export const auth = {
 };
 
 export default {
-  ambulanceRequests,
-  hospitals,
   rideHistory,
-  auth
+  contactUs,
+  favorites,
+  auth,
+  requests // Add requests to the default export
 };

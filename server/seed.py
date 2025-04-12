@@ -1,7 +1,7 @@
 from app import app, db
 from models import User, RideHistory, ContactUs, Favorite, RideStatusEnum
 from werkzeug.security import generate_password_hash
-from datetime import datetime
+from datetime import datetime, timedelta  # Add timedelta import here
 
 # Clear existing data from the tables
 def clear_data():
@@ -44,14 +44,14 @@ def seed_data():
             user_id=user1.id,
             hospital_name="City Hospital",
             payment_method="Credit Card",
-            status=RideStatusEnum.COMPLETED,
+            date=datetime.utcnow() - timedelta(days=2)  # 2 days ago
         )
 
         ride2 = RideHistory(
             user_id=user2.id,
             hospital_name="Greenwood Hospital",
             payment_method="Cash",
-            status=RideStatusEnum.PENDING,
+            date=datetime.utcnow() - timedelta(hours=5)  # 5 hours ago
         )
 
         # Add ride histories to the session

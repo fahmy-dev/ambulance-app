@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import api from "../utils/api"; // Add this import
 
 function AmbulanceRequestForm({ position, onRequestSubmit, onHospitalSelect }) {
   const [hospitals, setHospitals] = useState([
@@ -22,6 +23,13 @@ function AmbulanceRequestForm({ position, onRequestSubmit, onHospitalSelect }) {
   }, [position, searchTerm]);
   
   useEffect(() => {
+    const isUserTyping = document.activeElement === searchInputRef.current;
+    if (position && searchTerm.length > 0 && isUserTyping) {
+      fetchNearbyHospitals(position);
+    }
+  }, [position, searchTerm]);
+  
+  useEffect(() => {
     if (selectedHospital && onHospitalSelect) {
       onHospitalSelect(selectedHospital);
     }
@@ -32,7 +40,7 @@ function AmbulanceRequestForm({ position, onRequestSubmit, onHospitalSelect }) {
     setError(null); // Reset error before making the request
     try {
       const [lat, lng] = position;
-      const radius = 5000; // 5km radius
+      const radius = 10000; // Increased to 10km radius for better coverage
       
       const query = `
         [out:json];
@@ -43,6 +51,15 @@ function AmbulanceRequestForm({ position, onRequestSubmit, onHospitalSelect }) {
           node["amenity"="clinic"](around:${radius},${lat},${lng});
           way["amenity"="clinic"](around:${radius},${lat},${lng});
           relation["amenity"="clinic"](around:${radius},${lat},${lng});
+          node["healthcare"="hospital"](around:${radius},${lat},${lng});
+          way["healthcare"="hospital"](around:${radius},${lat},${lng});
+          relation["healthcare"="hospital"](around:${radius},${lat},${lng});
+          node["healthcare"="centre"](around:${radius},${lat},${lng});
+          way["healthcare"="centre"](around:${radius},${lat},${lng});
+          relation["healthcare"="centre"](around:${radius},${lat},${lng});
+          node["healthcare"="clinic"](around:${radius},${lat},${lng});
+          way["healthcare"="clinic"](around:${radius},${lat},${lng});
+          relation["healthcare"="clinic"](around:${radius},${lat},${lng});
         );
         out center;
       `;
@@ -55,22 +72,31 @@ function AmbulanceRequestForm({ position, onRequestSubmit, onHospitalSelect }) {
       if (response.ok) {
         const data = await response.json();
         
-        const hospitals = data.elements.map((item, index) => {
-          const [itemLat, itemLng] = getCoordinates(item);
-          
-          return {
-            id: `osm-${item.id}`,
-            name: item.tags.name || `Hospital ${index + 1}`,
-            address: getAddress(item),
-            position: [itemLat, itemLng],
-            distance: calculateDistance(position, [itemLat, itemLng]),
-            favorite: false
-          };
-        });
+        const hospitals = data.elements
+          .filter(item => item.tags && (item.tags.name || item.tags['name:en']))
+          .map((item, index) => {
+            const [itemLat, itemLng] = getCoordinates(item);
+            const name = item.tags.name || item.tags['name:en'] || `Medical Facility ${index + 1}`;
+            const type = item.tags.amenity || item.tags.healthcare || 'medical';
+            
+            return {
+              id: `osm-${item.id}`,
+              name: name,
+              type: type,
+              address: getAddress(item),
+              position: [itemLat, itemLng],
+              distance: calculateDistance(position, [itemLat, itemLng]),
+              favorite: false
+            };
+          });
         
-        const sortedHospitals = hospitals
-          .sort((a, b) => parseFloat(a.distance) - parseFloat(b.distance))
-          .slice(0, 5);
+        // Remove duplicates by name
+        const uniqueHospitals = removeDuplicates(hospitals, 'name');
+        
+        // Sort by distance
+        const sortedHospitals = uniqueHospitals.sort((a, b) => 
+          parseFloat(a.distance) - parseFloat(b.distance)
+        );
         
         setNearbyHospitals(sortedHospitals);
       } else {
@@ -84,18 +110,34 @@ function AmbulanceRequestForm({ position, onRequestSubmit, onHospitalSelect }) {
     }
   };
   
+  const removeDuplicates = (array, key) => {
+    return array.filter((item, index, self) => 
+      index === self.findIndex((t) => t[key] === item[key])
+    );
+  };
+  
   const getCoordinates = (item) => {
     if (item.type === "node") {
       return [item.lat, item.lon];
-    } else {
+    } else if (item.center) {
       return [item.center.lat, item.center.lon];
+    } else {
+      return [0, 0]; // Fallback
     }
   };
   
   const getAddress = (item) => {
-    return item.tags["addr:street"] ? 
-      `${item.tags["addr:street"]} ${item.tags["addr:housenumber"] || ""}` : 
-      "Address unavailable";
+    if (!item.tags) return "Address unavailable";
+    
+    const street = item.tags["addr:street"] || "";
+    const housenumber = item.tags["addr:housenumber"] || "";
+    const city = item.tags["addr:city"] || "";
+    
+    if (street || housenumber || city) {
+      return `${street} ${housenumber}, ${city}`.trim();
+    }
+    
+    return "Address unavailable";
   };
   
   const calculateDistance = (point1, point2) => {
@@ -141,10 +183,65 @@ function AmbulanceRequestForm({ position, onRequestSubmit, onHospitalSelect }) {
     }
   };
   
+  const calculateRelevanceScore = (hospital, searchTerm) => {
+    const name = hospital.name.toLowerCase();
+    const search = searchTerm.toLowerCase();
+    
+    // Exact match gets highest score
+    if (name === search) return 100;
+    
+    // Contains full search term
+    if (name.includes(search)) return 80;
+    
+    // Check if it's a hospital or medical center
+    const isHospitalOrMedical = 
+      name.includes('hospital') || 
+      name.includes('medical') || 
+      name.includes('clinic') || 
+      name.includes('centre') || 
+      name.includes('center');
+    
+    if (isHospitalOrMedical) {
+      // Check if any word in the search term is in the name
+      const searchWords = search.split(' ');
+      for (const word of searchWords) {
+        if (word.length > 2 && name.includes(word)) {
+          return 60;
+        }
+      }
+      
+      // Check if any part of the search term matches
+      for (let i = 0; i < search.length - 2; i++) {
+        const part = search.substring(i, i + 3);
+        if (name.includes(part)) {
+          return 40;
+        }
+      }
+      
+      // It's a hospital/medical center but doesn't match the search term
+      return 20;
+    }
+    
+    // Not a hospital/medical center and doesn't match
+    return 0;
+  };
+  
   const filteredHospitals = searchTerm ? 
-    nearbyHospitals.filter(hospital => 
-      hospital.name.toLowerCase().includes(searchTerm.toLowerCase())
-    ) : [];
+    nearbyHospitals
+      .map(hospital => ({
+        ...hospital,
+        relevance: calculateRelevanceScore(hospital, searchTerm)
+      }))
+      .filter(hospital => hospital.relevance > 0)
+      .sort((a, b) => {
+        // First sort by relevance
+        if (b.relevance !== a.relevance) {
+          return b.relevance - a.relevance;
+        }
+        // Then by distance if relevance is the same
+        return parseFloat(a.distance) - parseFloat(b.distance);
+      })
+      .slice(0, 5) : [];
   
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
@@ -174,17 +271,32 @@ function AmbulanceRequestForm({ position, onRequestSubmit, onHospitalSelect }) {
     const eta = calculateETA(distance);
     
     const requestData = {
-      position,
-      hospital,
-      paymentMethod,
-      timestamp: new Date().toISOString(),
-      distance,
-      eta
+      hospital_name: hospital.name,
+      payment: paymentMethod,  // Changed from payment_method to payment
+      distance: distance,
+      eta: eta
     };
     
-    if (onRequestSubmit) {
-      onRequestSubmit(requestData);
-    }
+    // Send the request to the server
+    api.requests.create(requestData)
+      .then(response => {
+        console.log("Ambulance request created:", response);
+        
+        // Pass the full data including the response from server to the parent component
+        if (onRequestSubmit) {
+          onRequestSubmit({
+            ...requestData,
+            id: response.id,
+            hospital,
+            position,
+            timestamp: new Date().toISOString()
+          });
+        }
+      })
+      .catch(err => {
+        console.error("Failed to create ambulance request:", err);
+        setError("Failed to send request. Please try again.");
+      });
   };
   
   const isFavorite = (hospitalId) => {
@@ -204,7 +316,10 @@ function AmbulanceRequestForm({ position, onRequestSubmit, onHospitalSelect }) {
         >
           ★
         </span>
-        <span>{hospital.name}</span>
+        <div className="hospital-details">
+          <span className="hospital-name">{hospital.name}</span>
+          <span className="hospital-type">{hospital.type}</span>
+        </div>
       </div>
       {isInSearchResults && <span className="hospital-distance">{hospital.distance} km</span>}
     </div>

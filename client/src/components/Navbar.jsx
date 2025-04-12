@@ -18,17 +18,20 @@ function Navbar() {
         
         <div className="nav-links">
           <Link to="/home">Home</Link>
-          <Link to="/contact">Contact</Link>
           <Link to="/my-requests">My Requests</Link>
+          <Link to="/contact">Contact</Link>
         </div>
         
         <div className="auth-buttons">
           {user ? (
-            <button onClick={handleLogout} className="logout-btn">Logout</button>
+            <>
+              {/* Change this line to display user.name instead of the entire user object */}
+              <p>Welcome, {user.name}</p>
+              <button onClick={handleLogout} className="logout-btn">Logout</button>
+            </>
           ) : (
             <>
-              <button onClick={() => navigate("/auth")} className="login-btn">Login</button>
-              <button onClick={() => navigate("/auth", { state: { mode: "register" } })} className="register-btn">Register</button>
+              <button onClick={() => navigate("/auth")} className="login-btn">Login/Register</button>
             </>
           )}
         </div>

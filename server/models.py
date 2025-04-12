@@ -52,18 +52,25 @@ class RideHistory(db.Model, SerializerMixin):
     
     hospital_name = db.Column(db.String(100), nullable=False)
     payment_method = db.Column(db.String(20))
-    status = db.Column(db.Enum(RideStatusEnum), default=RideStatusEnum.PENDING)
-
+    date = db.Column(db.DateTime, default=datetime.utcnow)  # This already stores both date and time
 
     user = db.relationship('User', back_populates='ride_histories')
 
     def to_dict(self):
+        # Convert UTC time to local time (assuming East Africa Time for Kenya)
+        local_date = self.date
+        if local_date:
+            # Add 3 hours to convert from UTC to EAT (East Africa Time)
+            from datetime import timedelta
+            local_date = local_date + timedelta(hours=3)
+            
         return {
             "id": self.id,
             "user_id": self.user_id,
             "hospital_name": self.hospital_name,
             "payment_method": self.payment_method,
-            "status": self.status.name,
+            "date": self.date.isoformat() if self.date else None,  # Original UTC time in ISO format
+            "formatted_date": local_date.strftime("%b %d, %Y %I:%M %p") if local_date else None  # Human-readable local time
         }
 
 # Contact Us Model
@@ -73,7 +80,7 @@ class ContactUs(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(100), nullable=False)
-    phone_number = db.Column(db.String(20))
+    phone_number = db.Column(db.String(20), nullable=False)
     message = db.Column(db.Text, nullable=False)
 
     def to_dict(self):

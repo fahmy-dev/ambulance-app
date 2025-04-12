@@ -14,7 +14,14 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)
 
 # Configure CORS to allow requests from your React app
-CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
+CORS(app, resources={
+    r"/*": {
+        "origins": ["http://localhost:5173"],
+        "methods": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization", "Accept"],
+        "supports_credentials": True
+    }
+})
 
 # Use a fixed secret key for development
 app.config['JWT_SECRET_KEY'] = 'dev-secret-key'  # Replace with a secure key in production
@@ -83,7 +90,7 @@ def create_user():
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
-@app.route('/users', methods=['GET'])
+@app.route('/user', methods=['GET'])
 @jwt_required()
 def get_users():
     search_query = request.args.get('search', '', type=str)
@@ -99,6 +106,67 @@ def get_users():
         return jsonify({"error": "No users found matching the search criteria"}), 404
     
     return jsonify([u.to_dict() for u in users])
+
+# --------------------- AUTH ROUTES ---------------------
+@app.route('/login', methods=['POST'])
+@validate_json(required_fields=['email', 'password'])
+def login():
+    data = request.get_json()
+    user = User.query.filter_by(email=data['email']).first()
+    
+    if not user or not user.check_password(data['password']):
+        return jsonify({"error": "Invalid email or password"}), 401
+    
+    # Create access token
+    access_token = create_access_token(identity=user.id)
+    
+    return jsonify({
+        "access_token": access_token,
+        "user": user.to_dict()
+    }), 200
+
+@app.route('/me', methods=['GET'])
+@jwt_required()
+def get_current_user():
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+        
+    return jsonify(user.to_dict()), 200
+
+@app.route('/signup', methods=['POST'])
+@validate_json(required_fields=['name', 'email', 'password'])
+def signup():
+    data = request.get_json()
+    
+    # Check if user already exists
+    existing_user = User.query.filter_by(email=data['email']).first()
+    if existing_user:
+        return jsonify({"error": "Email already in use"}), 400
+    
+    # Create new user
+    user = User(
+        name=data['name'],
+        email=data['email']
+    )
+    user.set_password(data['password'])
+    
+    try:
+        db.session.add(user)
+        db.session.commit()
+        
+        # Create access token for the new user
+        access_token = create_access_token(identity=user.id)
+        
+        return jsonify({
+            "access_token": access_token,
+            "user": user.to_dict()
+        }), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
 
 # --------------------- RIDE HISTORY ROUTES ---------------------
 @app.route('/ride_history', methods=['POST'])
@@ -209,8 +277,8 @@ def contact_us():
     contact_message = ContactUs(
         name=data['name'],
         email=data['email'],
-        message=data['message'],
-        
+        phone_number=data['phone_number'],
+        message=data['message']  
     )
     
     try:
@@ -229,6 +297,29 @@ def get_contact_messages():
         return jsonify({"error": "No contact messages found"}), 404
 
     return jsonify([c.to_dict() for c in contact_messages])
+
+# Add this new route to handle ambulance requests
+@app.route('/request-ambulance', methods=['POST'])
+@jwt_required()
+@validate_json(required_fields=['hospital_name', 'payment_method'])
+def request_ambulance():
+    data = request.get_json()
+    user_id = get_jwt_identity()
+    
+    # Create a new ride history entry
+    ride_history = RideHistory(
+        user_id=user_id,
+        hospital_name=data['hospital_name'],
+        payment_method=data['payment_method']
+    )
+    
+    try:
+        db.session.add(ride_history)
+        db.session.commit()
+        return jsonify(ride_history.to_dict()), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)

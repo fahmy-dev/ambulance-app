@@ -57,9 +57,9 @@ function MyRequests() {
         <table className="requests-table">
           <thead>
             <tr>
-              <th>Date</th>
+              <th>ID</th>
               <th>Hospital</th>
-              <th>Distance</th>
+              <th>Date</th>
               <th>Payment</th>
               <th>Status</th>
             </tr>

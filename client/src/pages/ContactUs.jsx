@@ -37,6 +37,7 @@ function ContactUs() {
     console.log("Form submitted:", values);
     // Here you would typically send the data to your backend
     setTimeout(() => {
+      alert("Thank you for contacting us! We will get back to you soon.");
       setSubmitting(false);
       resetForm();
     }, 1000);

@@ -9,11 +9,6 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 db = SQLAlchemy()
 
-# Association table for many-to-many between Driver and Ambulance
-driver_ambulance = db.Table('driver_ambulance_assignments',
-    db.Column('driver_id', db.Integer, db.ForeignKey('driver.id'), primary_key=True),
-    db.Column('ambulance_id', db.Integer, db.ForeignKey('ambulance.id'), primary_key=True),
-)
 
 # Enum definition for Request Status
 class RequestStatusEnum(PyEnum):
@@ -23,10 +18,16 @@ class RequestStatusEnum(PyEnum):
     CANCELLED = "Cancelled"
 
 
+# Association table to link users and their favorite hospitals
+favorites = db.Table('favorites',
+    db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
+    db.Column('hospital_id', db.Integer, db.ForeignKey('hospital.id'), primary_key=True)
+)
+
 
 class User(db.Model, SerializerMixin):
     __tablename__ = 'user'
-    
+
     serialize_rules = ('-requests.patient', '-ride_histories.patient',)
 
     id = db.Column(db.Integer, primary_key=True)
@@ -39,26 +40,16 @@ class User(db.Model, SerializerMixin):
     requests = db.relationship('AmbulanceRequest', back_populates='patient')
     ride_histories = db.relationship('RideHistory', back_populates='patient')
 
+    # Many-to-many relationship for favorites
+    favorite_hospitals = db.relationship('Hospital', secondary=favorites, back_populates='favorited_by')
+
     def set_password(self, password):
         """Hash and set password."""
         self.password_hash = generate_password_hash(password)
 
-    # Add this debugging to your User class's check_password method
     def check_password(self, password):
-        try:
-            # Print the password being checked and the stored hash for debugging
-            print(f"Checking password: {password}")
-            print(f"Stored password hash: {self.password_hash}")
-            
-            # Your existing password check logic
-            result = check_password_hash(self.password_hash, password)
-            print(f"Password check result: {result}")
-            return result
-        except Exception as e:
-            print(f"Error in check_password: {str(e)}")
-            import traceback
-            traceback.print_exc()
-            return False
+        """Check hashed password."""
+        return check_password_hash(self.password_hash, password)
 
     def to_dict(self):
         return {
@@ -69,26 +60,6 @@ class User(db.Model, SerializerMixin):
             "location_lng": self.location_lng
         }
 
-class Driver(db.Model, SerializerMixin):
-    serialize_rules = ('-ride_histories.driver', '-ambulances.drivers',)
-
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-    contact = db.Column(db.String(100), unique=True, nullable=False)
-    is_available = db.Column(db.Boolean, default=True)
-    license_number = db.Column(db.String(50))
-
-    ride_histories = db.relationship('RideHistory', back_populates='driver')
-    ambulances = db.relationship('Ambulance', secondary=driver_ambulance, back_populates='drivers')
-
-    def to_dict(self):
-        return {
-            "id": self.id,
-            "name": self.name,
-            "contact": self.contact,
-            "is_available": self.is_available,
-            "license_number": self.license_number
-        }
 
 class Hospital(db.Model, SerializerMixin):
     serialize_rules = ('-ambulances.hospital', '-requests.hospital', '-ride_histories.hospital',)
@@ -104,6 +75,9 @@ class Hospital(db.Model, SerializerMixin):
     requests = db.relationship('AmbulanceRequest', back_populates='hospital')
     ride_histories = db.relationship('RideHistory', back_populates='hospital')
 
+    # Many-to-many relationship for favorites
+    favorited_by = db.relationship('User', secondary=favorites, back_populates='favorite_hospitals')
+
     def to_dict(self):
         return {
             "id": self.id,
@@ -113,8 +87,10 @@ class Hospital(db.Model, SerializerMixin):
             "availability": self.availability,
             "contact_info": self.contact_info
         }
+
+
 class Ambulance(db.Model, SerializerMixin):
-    serialize_rules = ('-hospital.ambulances', '-requests.ambulance', '-ride_histories.ambulance', '-drivers.ambulances',)
+    serialize_rules = ('-hospital.ambulances', '-requests.ambulance', '-ride_histories.ambulance')
 
     id = db.Column(db.Integer, primary_key=True)
     vehicle_no = db.Column(db.String(100), nullable=False)
@@ -127,8 +103,6 @@ class Ambulance(db.Model, SerializerMixin):
     hospital = db.relationship('Hospital', back_populates='ambulances')
     requests = db.relationship('AmbulanceRequest', back_populates='ambulance')
     ride_histories = db.relationship('RideHistory', back_populates='ambulance')
-    drivers = db.relationship('Driver', secondary=driver_ambulance, back_populates='ambulances')
-
 
     def to_dict(self):
         return {
@@ -139,6 +113,8 @@ class Ambulance(db.Model, SerializerMixin):
             "location_lng": self.location_lng,
             "hospital_id": self.hospital_id
         }
+
+
 class AmbulanceRequest(db.Model, SerializerMixin):
     serialize_rules = ('-patient.requests', '-hospital.requests', '-ambulance.requests', '-ride_history.request',)
 
@@ -159,7 +135,6 @@ class AmbulanceRequest(db.Model, SerializerMixin):
     ambulance = db.relationship('Ambulance', back_populates='requests')
     ride_history = db.relationship('RideHistory', uselist=False, back_populates='request')
 
-
     def to_dict(self):
         return {
             "id": self.id,
@@ -173,15 +148,15 @@ class AmbulanceRequest(db.Model, SerializerMixin):
             "status": self.status.name
         }
 
+
 class RideHistory(db.Model, SerializerMixin):
-    serialize_rules = ('-patient.ride_histories', '-hospital.ride_histories', '-ambulance.ride_histories', '-driver.ride_histories', '-request.ride_history',)
+    serialize_rules = ('-patient.ride_histories', '-hospital.ride_histories', '-ambulance.ride_histories', '-request.ride_history',)
 
     id = db.Column(db.Integer, primary_key=True)
     request_id = db.Column(db.Integer, db.ForeignKey('ambulance_request.id'), nullable=False)
     patient_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     hospital_id = db.Column(db.Integer, db.ForeignKey('hospital.id'), nullable=False)
     ambulance_id = db.Column(db.Integer, db.ForeignKey('ambulance.id'), nullable=False)
-    driver_id = db.Column(db.Integer, db.ForeignKey('driver.id'), nullable=True)
 
     start_time = db.Column(db.DateTime)
     end_time = db.Column(db.DateTime)
@@ -196,7 +171,6 @@ class RideHistory(db.Model, SerializerMixin):
     patient = db.relationship('User', back_populates='ride_histories')
     hospital = db.relationship('Hospital', back_populates='ride_histories')
     ambulance = db.relationship('Ambulance', back_populates='ride_histories')
-    driver = db.relationship('Driver', back_populates='ride_histories')
 
     def to_dict(self):
         return {
@@ -205,7 +179,6 @@ class RideHistory(db.Model, SerializerMixin):
             "patient_id": self.patient_id,
             "hospital_id": self.hospital_id,
             "ambulance_id": self.ambulance_id,
-            "driver_id": self.driver_id,
             "start_time": self.start_time.isoformat() if self.start_time else None,
             "end_time": self.end_time.isoformat() if self.end_time else None,
             "total_duration": self.total_duration,
@@ -214,3 +187,5 @@ class RideHistory(db.Model, SerializerMixin):
             "rating": self.rating,
             "feedback": self.feedback
         }
+
+

@@ -1,7 +1,6 @@
-import os
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-from models import db, User, Driver, Hospital, Ambulance, AmbulanceRequest, RideHistory
+from models import db, User, Hospital, Ambulance, AmbulanceRequest, RideHistory
 from flask_migrate import Migrate
 from datetime import timedelta, datetime
 from functools import wraps
@@ -13,8 +12,8 @@ from flask_jwt_extended import JWTManager, create_access_token, get_jwt_identity
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///ambulance.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['JWT_SECRET_KEY'] = os.urandom(24)
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)
+
 
 # Configure CORS to allow requests from your React app
 CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
@@ -187,78 +186,6 @@ def delete_hospital(id):
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
-# --------------------- DRIVER ROUTES ---------------------
-@app.route('/drivers', methods=['POST'])
-@jwt_required()
-@validate_json(required_fields=['name', 'contact'])
-def create_driver():
-    data = request.get_json()
-    existing_driver = Driver.query.filter_by(contact=data['contact']).first()
-    if existing_driver:
-        return jsonify({"error": "Driver already exists with this contact"}), 400
-
-    driver = Driver(
-        name=data['name'],
-        contact=data['contact'],
-        license_number=data.get('license_number'),
-        is_available=data.get('is_available', True)
-    )
-    try:
-        db.session.add(driver)
-        db.session.commit()
-        return jsonify(driver.to_dict()), 201
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"error": str(e)}), 500
-
-@app.route('/drivers', methods=['GET'])
-def get_drivers():
-    search_query = request.args.get('search', '', type=str)
-    availability_filter = request.args.get('is_available', None, type=bool)
-    
-    query = Driver.query
-    
-    if search_query:
-        query = query.filter(Driver.name.contains(search_query))
-    
-    if availability_filter is not None:
-        query = query.filter(Driver.is_available == availability_filter)
-    
-    drivers = query.all()
-    
-    # Error handling: If no drivers are found
-    if not drivers:
-        return jsonify({"error": "No drivers found matching the search criteria"}), 404
-    
-    return jsonify([d.to_dict() for d in drivers])
-
-
-@app.route('/drivers/<int:id>', methods=['PATCH'])
-@jwt_required()
-@validate_json(optional_fields=['is_available'])
-def update_driver(id):
-    driver = Driver.query.get_or_404(id)
-    data = request.get_json()
-    for key in data:
-        setattr(driver, key, data[key])
-    try:
-        db.session.commit()
-        return jsonify(driver.to_dict())
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"error": str(e)}), 500
-
-@app.route('/drivers/<int:id>', methods=['DELETE'])
-@jwt_required()
-def delete_driver(id):
-    driver = Driver.query.get_or_404(id)
-    try:
-        db.session.delete(driver)
-        db.session.commit()
-        return {"message": "Driver deleted"}
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"error": str(e)}), 500
 
 # --------------------- AMBULANCE ROUTES ---------------------
 @app.route('/ambulances', methods=['POST'])
@@ -526,30 +453,9 @@ def login():
         import traceback
         traceback.print_exc()
         return jsonify({"error": "An unexpected error occurred", "details": str(e)}), 500
-
-# --------------------- MAIN ---------------------
-if __name__ == "__main__":
-    app.run(debug=True, port=5555)
-
-
-# Add these routes to your app.py
-
-@app.route('/favorites', methods=['GET'])
-@jwt_required()
-def get_user_favorites():
-    user_id = get_jwt_identity()
-    favorites = UserFavorite.query.filter_by(user_id=user_id).all()
     
-    # Return favorites with hospital details
-    result = []
-    for fav in favorites:
-        fav_dict = fav.to_dict()
-        if fav.hospital:
-            fav_dict['hospital_name'] = fav.hospital.name
-        result.append(fav_dict)
-    
-    return jsonify(result)
 
+# --------------------- FAVORITES SECTION ---------------------
 @app.route('/favorites', methods=['POST'])
 @jwt_required()
 @validate_json(required_fields=['hospital_id'])
@@ -557,53 +463,57 @@ def add_favorite():
     user_id = get_jwt_identity()
     data = request.get_json()
     
-    # Check if hospital exists
     hospital = Hospital.query.get(data['hospital_id'])
     if not hospital:
         return jsonify({"error": "Hospital not found"}), 404
     
-    # Check if already a favorite
-    existing = UserFavorite.query.filter_by(
-        user_id=user_id, 
-        hospital_id=data['hospital_id']
-    ).first()
+    user = User.query.get(user_id)
+    if hospital in user.hospitals:
+        return jsonify({"message": "Hospital is already in your favorites"}), 200
     
-    if existing:
-        return jsonify({"message": "Already in favorites"}), 200
-    
-    # Create new favorite
-    favorite = UserFavorite(
-        user_id=user_id,
-        hospital_id=data['hospital_id']
-    )
-    
+    user.hospitals.append(hospital)
     try:
-        db.session.add(favorite)
         db.session.commit()
-        return jsonify(favorite.to_dict()), 201
+        return jsonify({"message": "Hospital added to favorites"}), 201
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
+
+
+@app.route('/favorites', methods=['GET'])
+@jwt_required()
+def get_user_favorites():
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    
+    favorites = [hospital.to_dict() for hospital in user.hospitals]
+    return jsonify(favorites)
+
 
 @app.route('/favorites/<int:hospital_id>', methods=['DELETE'])
 @jwt_required()
 def remove_favorite(hospital_id):
     user_id = get_jwt_identity()
+    user = User.query.get(user_id)
     
-    favorite = UserFavorite.query.filter_by(
-        user_id=user_id, 
-        hospital_id=hospital_id
-    ).first()
+    hospital = Hospital.query.get(hospital_id)
+    if hospital not in user.hospitals:
+        return jsonify({"error": "Hospital is not in your favorites"}), 404
     
-    if not favorite:
-        return jsonify({"error": "Favorite not found"}), 404
-    
+    user.hospitals.remove(hospital)
     try:
-        db.session.delete(favorite)
         db.session.commit()
-        return jsonify({"message": "Favorite removed successfully"}), 200
+        return jsonify({"message": "Hospital removed from favorites"}), 200
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
+
+
+# --------------------- MAIN ---------------------
+if __name__ == "__main__":
+    app.run(debug=True, port=5555)
+
+
+
 
     

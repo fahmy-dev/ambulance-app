@@ -12,11 +12,12 @@ def register():
     data = request.get_json()
 
     # Validate input
+    name = data.get('name')
     email = data.get('email')
     password = data.get('password')
 
-    if not email or not password:
-        return jsonify({'error': 'Email and password are required'}), 400
+    if not name or not email or not password:
+        return jsonify({'error': 'Name, email, and password are required'}), 400
 
     # Check if user already exists
     if User.query.filter_by(email=email).first():
@@ -25,7 +26,7 @@ def register():
     # Hash the password and create new user
     try:
         hashed_password = generate_password_hash(password, method='sha256')
-        new_user = User(email=email, password=hashed_password)
+        new_user = User(name=name, email=email, password=hashed_password)
         db.session.add(new_user)
         db.session.commit()
         return jsonify({'message': 'User registered successfully'}), 201

@@ -69,10 +69,7 @@ def handle_general_error(error):
         return jsonify({"error": "Database error", "details": str(error)}), 500
     return jsonify({"error": "An unexpected error occurred", "details": str(error)}), 500
 
-# Remove this route as it conflicts with the frontend serving route
-# @app.route('/')
-# def index():
-#     return {"message": "Ambulance API is running!"}
+
 
 # --------------------- USER ROUTES ---------------------
 @app.route('/users', methods=['POST'])
@@ -337,8 +334,6 @@ def serve_static(path):
     else:
         return send_from_directory('../client/dist', 'index.html')
 
-# Keep this at the bottom of the file
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8000, debug=True)
-    # Remove the second app.run call
-    # app.run(debug=True)
+  

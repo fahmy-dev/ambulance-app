@@ -1,20 +1,13 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask import Flask
 from sqlalchemy_serializer import SerializerMixin
-from sqlalchemy import ForeignKey, Enum, Table, UniqueConstraint
+from sqlalchemy import  UniqueConstraint
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from enum import Enum as PyEnum
 from werkzeug.security import generate_password_hash, check_password_hash
 
 db = SQLAlchemy()
-
-# Enum for Ride Status
-class RideStatusEnum(PyEnum):
-    PENDING = "Pending"
-    IN_PROGRESS = "In Progress"
-    COMPLETED = "Completed"
-    CANCELLED = "Cancelled"
 
 # User Model
 class User(db.Model, SerializerMixin):

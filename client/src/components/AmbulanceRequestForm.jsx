@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import api from "../utils/api";
-import { useAuth } from "../context/AuthContext"; // Add this import
+import { useAuth } from "../context/AuthContext"; 
 
 function AmbulanceRequestForm({ position, onRequestSubmit, onHospitalSelect }) {
-  // Remove the static hospitals state
+
   const [nearbyHospitals, setNearbyHospitals] = useState([]);
   const [favorites, setFavorites] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -29,10 +29,10 @@ function AmbulanceRequestForm({ position, onRequestSubmit, onHospitalSelect }) {
   
   const fetchNearbyHospitals = async (position) => {
     setIsLoading(true);
-    setError(null); // Reset error before making the request
+    setError(null); 
     try {
       const [lat, lng] = position;
-      const radius = 10000; // Increased to 10km radius for better coverage
+      const radius = 10000; 
       
       const query = `
         [out:json];

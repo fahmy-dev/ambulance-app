@@ -39,35 +39,19 @@ function ContactUs() {
 
   const handleSubmit = async (values, { setSubmitting, resetForm }) => {
     try {
-      // Format the data to match the server model
       const contactData = {
         name: values.name,
         email: values.email,
-        phone_number: values.phone || "", // Phone is optional in the server model
+        phone_number: values.phone || "",
         message: values.message
       };
       
-      console.log("Sending contact data:", contactData);
+      // Use the api utility instead of direct fetch
+      await api.contactUs.create(contactData);
       
-      // Send data to the server using fetch directly to debug
-      const response = await fetch("http://localhost:8000/contact_us", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(contactData)
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to submit form");
-      }
-      
-      // Show success message
       setSubmitSuccess(true);
       resetForm();
       
-      // Hide success message after 5 seconds
       setTimeout(() => {
         setSubmitSuccess(false);
       }, 5000);

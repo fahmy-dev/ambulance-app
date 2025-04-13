@@ -22,17 +22,46 @@ function AmbulanceRequestForm({ position, onRequestSubmit, onHospitalSelect }) {
   }, [position, searchTerm]);
   
   useEffect(() => {
-    if (selectedHospital && onHospitalSelect) {
-      onHospitalSelect(selectedHospital);
+    const isUserTyping = document.activeElement === searchInputRef.current;
+    
+    // Only fetch if we have valid position data and user is actively searching
+    if (position && 
+        Array.isArray(position) && 
+        position.length === 2 && 
+        !isNaN(position[0]) && 
+        !isNaN(position[1]) && 
+        searchTerm.length > 0 && 
+        isUserTyping) {
+      
+      // Add a debounce to prevent too many API calls
+      const debounceTimer = setTimeout(() => {
+        fetchNearbyHospitals(position);
+      }, 500);
+      
+      return () => clearTimeout(debounceTimer);
     }
-  }, [selectedHospital, onHospitalSelect]);
+  }, [position, searchTerm]);
   
+  // Update the fetchNearbyHospitals function with better error handling
   const fetchNearbyHospitals = async (position) => {
     setIsLoading(true);
-    setError(null); 
+    setError(null);
+    
+    // Add a timeout to prevent hanging requests
+    const fetchTimeout = setTimeout(() => {
+      setIsLoading(false);
+      setError("Search request timed out. Please try again.");
+    }, 15000);
+    
     try {
+      // Validate position data
+      if (!position || !Array.isArray(position) || position.length !== 2 || 
+          isNaN(position[0]) || isNaN(position[1])) {
+        throw new Error("Invalid position data");
+      }
+      
       const [lat, lng] = position;
-      const radius = 10000; 
+      const radius = 10000;
       
       const query = `
         [out:json];
@@ -133,6 +162,13 @@ function AmbulanceRequestForm({ position, onRequestSubmit, onHospitalSelect }) {
   };
   
   const calculateDistance = (point1, point2) => {
+    // Validate input points
+    if (!point1 || !point2 || !Array.isArray(point1) || !Array.isArray(point2) ||
+        point1.length !== 2 || point2.length !== 2 ||
+        isNaN(point1[0]) || isNaN(point1[1]) || isNaN(point2[0]) || isNaN(point2[1])) {
+      return "0.0";
+    }
+    
     const [lat1, lon1] = point1;
     const [lat2, lon2] = point2;
     

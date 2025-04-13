@@ -72,8 +72,10 @@ function Home() {
   const { user } = useAuth();
 
   useEffect(() => {
+    // Always set default position first to ensure map loads
     setPosition(defaultPosition);
     
+    // Reduce initial loading time
     setTimeout(() => {
       if (loading) {
         setLoading(false);
@@ -89,29 +91,45 @@ function Home() {
           }
         }, 8000);
         
-        // Use getCurrentPosition instead of watchPosition for initial location
+        // Modified geolocation options for better compatibility
+        const geoOptions = {
+          enableHighAccuracy: false, // Set to false to avoid CoreLocation errors
+          timeout: 15000,
+          maximumAge: 30000 // Allow cached positions up to 30 seconds old
+        };
+        
+        // Try to get location once with relaxed settings
         navigator.geolocation.getCurrentPosition(
           (position) => {
+            clearTimeout(locationTimeout);
+            
+            // Validate position data
             if (!position || !position.coords) {
-              throw new Error("Invalid position data received");
+              throw new Error("Invalid position data");
             }
             
-            clearTimeout(locationTimeout);
             setPosition([position.coords.latitude, position.coords.longitude]);
             setLoading(false);
             setLocationError(null);
           },
           (error) => {
             clearTimeout(locationTimeout);
+            
+            // Log specific error codes for debugging
+            let errorMsg = "Could not access your location. Using default location instead.";
+            if (error.code === 1) {
+              errorMsg = "Location access denied. Using default location.";
+            } else if (error.code === 2) {
+              errorMsg = "Location unavailable. Using default location.";
+            } else if (error.code === 3) {
+              errorMsg = "Location request timed out. Using default location.";
+            }
+            
             console.error("Geolocation error:", error.code, error.message);
-            setLocationError("Could not access your location. Using default location instead.");
+            setLocationError(errorMsg);
             setLoading(false);
           },
-          { 
-            enableHighAccuracy: false, // Set to false to avoid CoreLocation high accuracy errors
-            timeout: 10000,
-            maximumAge: 60000 // Reduce cache time to 1 minute
-          }
+          geoOptions
         );
         
         return () => {

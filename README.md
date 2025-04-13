@@ -80,8 +80,8 @@ You can access the live application at: https://ambulance-app-b741.onrender.com
    ```bash
    python app.py
    ```
-   # Important: Edit .env.development and change VITE_API_URL to http://localhost:<your flask port> (usually http://localhost:5555, but it might be different so check your terminal when you run the flask server)
-   # This ensures the frontend connects to the correct Flask backend port
+   ## Important: Edit .env.development and change VITE_API_URL to http://localhost:'your flask port' (usually http://localhost:5555, but it might be different so check your terminal when you run the flask server)
+   ## This ensures the frontend connects to the correct Flask backend port
    
    The server will start on http://localhost:5555 (or your specified port)
 

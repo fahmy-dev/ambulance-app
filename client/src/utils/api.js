@@ -1,6 +1,6 @@
 
-// API utility for making requests to the server
-const API_URL = "http://localhost:5000"; // Changed from 5555 to 5000 to match your server
+// Update API_URL to use environment variable
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 // Helper function for making API requests
 async function fetchApi(endpoint, options = {}) {

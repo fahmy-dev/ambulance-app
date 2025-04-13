@@ -7,6 +7,8 @@ from functools import wraps
 from flask_jwt_extended import JWTManager, create_access_token, get_jwt_identity, jwt_required
 import sqlalchemy
 from sqlalchemy.exc import IntegrityError
+import os
+from flask import send_from_directory
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///ambulance.db'
@@ -321,5 +323,6 @@ def request_ambulance():
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
+# Update the app.run configuration
 if __name__ == '__main__':
     app.run(debug=True)

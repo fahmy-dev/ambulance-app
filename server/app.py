@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-from models import db, User, RideHistory, ContactUs, Favorite, RideStatusEnum
+from models import db, User, RideHistory, ContactUs, Favorite
 from flask_migrate import Migrate
 from datetime import timedelta, datetime
 from functools import wraps

@@ -107,8 +107,8 @@ export const AuthProvider = ({ children }) => {
     login,
     register,
     logout,
-    saveTempRequest,    // Add this
-    processTempRequest  // Add this
+    saveTempRequest,    
+    processTempRequest  
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

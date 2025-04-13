@@ -29,24 +29,23 @@ function RequestConfirmationPanel({ requestData, visible }) {
   
   const handleViewRequests = () => {
     if (!user) {
-      // Save request data to localStorage as fallback
+   
       const tempRequestData = {
         hospital: requestData.hospital,
         paymentMethod: requestData.paymentMethod,
         timestamp: new Date().toISOString()
       };
 
-      // Try to use context function, fallback to localStorage
+   
       if (typeof saveTempRequest === 'function') {
         saveTempRequest(tempRequestData);
       } else {
         localStorage.setItem('tempRequest', JSON.stringify(tempRequestData));
       }
-      
-      // Store return URL
+    
       sessionStorage.setItem('returnAfterAuth', '/my-requests');
       
-      // Redirect to auth
+      
       navigate("/auth", { 
         state: { 
           returnUrl: "/my-requests",

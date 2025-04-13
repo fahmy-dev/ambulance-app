@@ -11,7 +11,7 @@ function Navbar() {
     if (isConfirmed) {
       logout();
       navigate("/home");
-      // Add window.location.reload() to refresh the page
+   
       window.location.reload();
       alert("You have successfully logged out.");
     }

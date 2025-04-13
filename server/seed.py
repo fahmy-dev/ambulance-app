@@ -44,14 +44,14 @@ def seed_data():
             user_id=user1.id,
             hospital_name="City Hospital",
             payment_method="Credit Card",
-            date=datetime.utcnow() - timedelta(days=2)  # 2 days ago
+            date=datetime.utcnow() - timedelta(days=2)  
         )
 
         ride2 = RideHistory(
             user_id=user2.id,
             hospital_name="Greenwood Hospital",
             payment_method="Cash",
-            date=datetime.utcnow() - timedelta(hours=5)  # 5 hours ago
+            date=datetime.utcnow() - timedelta(hours=5)  
         )
 
         # Add ride histories to the session

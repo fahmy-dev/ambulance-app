@@ -1,16 +1,16 @@
 import React, { useState, useEffect, useRef } from "react";
 import api from "../utils/api";
-import { useAuth } from "../context/AuthContext"; // Add this import
+import { useAuth } from "../context/AuthContext"; 
 
 function AmbulanceRequestForm({ position, onRequestSubmit, onHospitalSelect }) {
-  // Remove the static hospitals state
+ 
   const [nearbyHospitals, setNearbyHospitals] = useState([]);
   const [favorites, setFavorites] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("Cash");
   const [selectedHospital, setSelectedHospital] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null); // Error state
+  const [error, setError] = useState(null);
   const { user } = useAuth();
   const searchInputRef = useRef(null);
   
@@ -29,10 +29,10 @@ function AmbulanceRequestForm({ position, onRequestSubmit, onHospitalSelect }) {
   
   const fetchNearbyHospitals = async (position) => {
     setIsLoading(true);
-    setError(null); // Reset error before making the request
+    setError(null); 
     try {
       const [lat, lng] = position;
-      const radius = 10000; // Increased to 10km radius for better coverage
+      const radius = 10000; 
       
       const query = `
         [out:json];
@@ -81,11 +81,10 @@ function AmbulanceRequestForm({ position, onRequestSubmit, onHospitalSelect }) {
               favorite: false
             };
           });
-        
-        // Remove duplicates by name
+      
         const uniqueHospitals = removeDuplicates(hospitals, 'name');
         
-        // Sort by distance
+       
         const sortedHospitals = uniqueHospitals.sort((a, b) => 
           parseFloat(a.distance) - parseFloat(b.distance)
         );
@@ -114,7 +113,7 @@ function AmbulanceRequestForm({ position, onRequestSubmit, onHospitalSelect }) {
     } else if (item.center) {
       return [item.center.lat, item.center.lon];
     } else {
-      return [0, 0]; // Fallback
+      return [0, 0]; 
     }
   };
   
@@ -178,14 +177,12 @@ function AmbulanceRequestForm({ position, onRequestSubmit, onHospitalSelect }) {
   const calculateRelevanceScore = (hospital, searchTerm) => {
     const name = hospital.name.toLowerCase();
     const search = searchTerm.toLowerCase();
-    
-    // Exact match gets highest score
+
     if (name === search) return 100;
-    
-    // Contains full search term
+
     if (name.includes(search)) return 80;
     
-    // Check if it's a hospital or medical center
+
     const isHospitalOrMedical = 
       name.includes('hospital') || 
       name.includes('medical') || 
@@ -194,7 +191,7 @@ function AmbulanceRequestForm({ position, onRequestSubmit, onHospitalSelect }) {
       name.includes('center');
     
     if (isHospitalOrMedical) {
-      // Check if any word in the search term is in the name
+
       const searchWords = search.split(' ');
       for (const word of searchWords) {
         if (word.length > 2 && name.includes(word)) {
@@ -202,7 +199,7 @@ function AmbulanceRequestForm({ position, onRequestSubmit, onHospitalSelect }) {
         }
       }
       
-      // Check if any part of the search term matches
+
       for (let i = 0; i < search.length - 2; i++) {
         const part = search.substring(i, i + 3);
         if (name.includes(part)) {
@@ -210,11 +207,11 @@ function AmbulanceRequestForm({ position, onRequestSubmit, onHospitalSelect }) {
         }
       }
       
-      // It's a hospital/medical center but doesn't match the search term
+
       return 20;
     }
     
-    // Not a hospital/medical center and doesn't match
+
     return 0;
   };
   
@@ -226,11 +223,11 @@ function AmbulanceRequestForm({ position, onRequestSubmit, onHospitalSelect }) {
       }))
       .filter(hospital => hospital.relevance > 0)
       .sort((a, b) => {
-        // First sort by relevance
+     
         if (b.relevance !== a.relevance) {
           return b.relevance - a.relevance;
         }
-        // Then by distance if relevance is the same
+
         return parseFloat(a.distance) - parseFloat(b.distance);
       })
       .slice(0, 5) : [];
@@ -264,43 +261,40 @@ function AmbulanceRequestForm({ position, onRequestSubmit, onHospitalSelect }) {
     
     const requestData = {
       hospital_name: hospital.name,
-      payment: paymentMethod,  // Changed from payment_method to payment
+      payment: paymentMethod, 
       distance: distance,
       eta: eta
     };
     
-    // Instead of making the API call directly, pass the data to the parent component
+
     if (onRequestSubmit) {
       onRequestSubmit({
         ...requestData,
-        id: "temp-" + Date.now(), // Generate a temporary ID
+        id: "temp-" + Date.now(), 
         hospital,
         position,
-        paymentMethod, // Make sure paymentMethod is included
+        paymentMethod, 
         timestamp: new Date().toISOString()
       });
     }
     
-    // We're not making the API call here anymore
-    // The parent component (Home.jsx) will handle showing the confirmation
+
   };
   
   const isFavorite = (hospitalId) => {
     return hospitals.some(h => h.id === hospitalId && h.favorite);
   };
   
-  // Update the renderHospitalItem function to use favorites instead of hospitals
+
   const renderHospitalItem = (hospital, isInSearchResults = false) => (
     <div 
       key={hospital.id || hospital.hospital_name} 
       className={`hospital-item ${selectedHospital && (selectedHospital.id === hospital.id || selectedHospital.name === hospital.hospital_name) ? 'selected' : ''}`}
       onClick={() => {
-        // Create a complete hospital object from favorite if needed
         const completeHospital = {
           ...hospital,
           name: hospital.name || hospital.hospital_name,
           id: hospital.id || `fav-${hospital.hospital_name}`,
-          // Add default values for required fields if they don't exist
           type: hospital.type || 'hospital',
           distance: hospital.distance || '0'
         };
@@ -326,7 +320,7 @@ function AmbulanceRequestForm({ position, onRequestSubmit, onHospitalSelect }) {
     </div>
   );
 
-  // Fetch favorites when component mounts if user is logged in
+
   useEffect(() => {
     if (user) {
       fetchUserFavorites();
@@ -343,8 +337,7 @@ function AmbulanceRequestForm({ position, onRequestSubmit, onHospitalSelect }) {
     }
   };
   
-  // Remove addToFavorites function as it's no longer needed
-  // Remove isFavorite function as it's no longer needed
+
 
   const toggleFavorite = async (hospital) => {
     if (!user) {
@@ -358,7 +351,7 @@ function AmbulanceRequestForm({ position, onRequestSubmit, onHospitalSelect }) {
       );
       
       if (isFavorite) {
-        // Find the hospital name to remove
+        
         const hospitalName = hospital.name || hospital.hospital_name;
         await api.favorites.remove({ hospital_name: hospitalName });
         setFavorites(favorites.filter(fav => fav.hospital_name !== hospitalName));
@@ -398,7 +391,7 @@ function AmbulanceRequestForm({ position, onRequestSubmit, onHospitalSelect }) {
           )
         )}
         
-        {/* Show favorites section always, but with different content based on login status */}
+       
         <div className="favourite-hospitals" style={{ marginTop: '20px' }}>
           <h3>Favourite Hospitals</h3>
           {user ? (

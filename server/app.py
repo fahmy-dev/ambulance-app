@@ -18,21 +18,21 @@ app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)
 # Configure CORS to allow requests from your React app
 CORS(app, resources={
     r"/*": {
-        "origins": "*",  # Allow all origins temporarily for debugging
+        "origins": "*",  
         "methods": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
         "allow_headers": ["Content-Type", "Authorization", "Accept"],
         "supports_credentials": True
     }
 })
 
-# Use a fixed secret key for development
-app.config['JWT_SECRET_KEY'] = 'dev-secret-key'  # Replace with a secure key in production
+
+app.config['JWT_SECRET_KEY'] = 'dev-secret-key' 
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)
 jwt = JWTManager(app)
 db.init_app(app)
 migrate = Migrate(app, db)
 
-# Add this to create tables if they don't exist
+
 with app.app_context():
     db.create_all()
 
@@ -53,7 +53,7 @@ def validate_json(required_fields=None, optional_fields=None):
                     if field in data and data[field] == "":
                         return jsonify({"error": f"Field '{field}' cannot be empty"}), 400
 
-            # Validate 'status' for RideHistory
+           
             if 'status' in data and data['status'] not in [status.name for status in RideStatusEnum]:
                 return jsonify({"error": f"Invalid status value: {data['status']}"}), 400
 
@@ -64,15 +64,12 @@ def validate_json(required_fields=None, optional_fields=None):
 # ---------------- GENERAL ERROR HANDLING ----------------
 @app.errorhandler(Exception)
 def handle_general_error(error):
-    # Specific error handling for database-related issues
+    
     if isinstance(error, sqlalchemy.exc.SQLAlchemyError):
         return jsonify({"error": "Database error", "details": str(error)}), 500
     return jsonify({"error": "An unexpected error occurred", "details": str(error)}), 500
 
-# Remove this route as it conflicts with the frontend serving route
-# @app.route('/')
-# def index():
-#     return {"message": "Ambulance API is running!"}
+
 
 # --------------------- USER ROUTES ---------------------
 @app.route('/users', methods=['POST'])
@@ -325,27 +322,8 @@ def request_ambulance():
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
-# Update the app.run configuration
-# Change the database configuration to always use SQLite
+
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///ambulance.db'
 
-# Remove the production-specific route handlers
-# Keep only the API routes and remove the static file serving routes
-
-# Remove or comment out these routes:
-# @app.route('/')
-# def serve():
-#     return send_from_directory('../client/dist', 'index.html')
-
-# @app.route('/<path:path>')
-# def serve_static(path):
-#     if path != "" and os.path.exists("../client/dist/" + path):
-#         return send_from_directory('../client/dist', path)
-#     else:
-#         return send_from_directory('../client/dist', 'index.html')
-
-# Keep this at the bottom of the file
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
-    # Remove the second app.run call
-    # app.run(debug=True)

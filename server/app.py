@@ -204,9 +204,7 @@ def get_ride_history():
     user_id = get_jwt_identity()
     history = RideHistory.query.filter_by(user_id=user_id).all()
 
-    if not history:
-        return jsonify({"error": "No ride history found for this user"}), 404
-
+    # Return empty array instead of error when no history found
     return jsonify([h.to_dict() for h in history])
 
 # --------------------- FAVORITES ROUTES ---------------------
@@ -247,9 +245,7 @@ def get_favorites():
     user_id = get_jwt_identity()
     favorites = Favorite.query.filter_by(user_id=user_id).all()
 
-    if not favorites:
-        return jsonify({"error": "No favorites found for this user"}), 404
-
+    # Return empty array instead of error when no favorites found
     return jsonify([f.to_dict() for f in favorites])
 
 # Remove a hospital from favorites
@@ -300,9 +296,7 @@ def contact_us():
 def get_contact_messages():
     contact_messages = ContactUs.query.all()
 
-    if not contact_messages:
-        return jsonify({"error": "No contact messages found"}), 404
-
+    # Return empty array instead of error when no contact messages found
     return jsonify([c.to_dict() for c in contact_messages])
 
 # Add this new route to handle ambulance requests

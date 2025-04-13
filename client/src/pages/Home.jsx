@@ -87,34 +87,38 @@ function Home() {
             setLoading(false);
             setLocationError("Location request timed out. Using default location.");
           }
-        }, 5000);
+        }, 8000);
         
-        const watchId = navigator.geolocation.watchPosition(
+        // Use getCurrentPosition instead of watchPosition for initial location
+        navigator.geolocation.getCurrentPosition(
           (position) => {
+            if (!position || !position.coords) {
+              throw new Error("Invalid position data received");
+            }
+            
             clearTimeout(locationTimeout);
             setPosition([position.coords.latitude, position.coords.longitude]);
             setLoading(false);
             setLocationError(null);
-            
-            navigator.geolocation.clearWatch(watchId);
           },
           (error) => {
             clearTimeout(locationTimeout);
+            console.error("Geolocation error:", error.code, error.message);
             setLocationError("Could not access your location. Using default location instead.");
             setLoading(false);
           },
           { 
-            enableHighAccuracy: false,
+            enableHighAccuracy: false, // Set to false to avoid CoreLocation high accuracy errors
             timeout: 10000,
-            maximumAge: 300000
+            maximumAge: 60000 // Reduce cache time to 1 minute
           }
         );
         
         return () => {
-          navigator.geolocation.clearWatch(watchId);
           clearTimeout(locationTimeout);
         };
       } catch (e) {
+        console.error("Geolocation exception:", e);
         setLocationError("An unexpected error occurred. Using default location.");
         setLoading(false);
       }

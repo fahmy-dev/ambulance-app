@@ -1,6 +1,6 @@
 
-// Update the API_URL to use relative paths in production
-const API_URL = "";  // Empty string for same-origin requests
+// Use environment variable for API URL, fallback to empty string for production
+const API_URL = import.meta.env.VITE_API_URL || "";
 
 // Helper function for making API requests
 async function fetchApi(endpoint, options = {}) {

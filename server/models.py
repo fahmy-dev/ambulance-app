@@ -31,7 +31,8 @@ class User(db.Model, SerializerMixin):
     email = db.Column(db.String(100), unique=True, nullable=False)
     location_lat = db.Column(db.Float)
     location_lng = db.Column(db.Float)
-
+    password = db.Column(db.String(200), nullable=False)
+    
     requests = db.relationship('AmbulanceRequest', back_populates='patient')
     ride_histories = db.relationship('RideHistory', back_populates='patient')
 

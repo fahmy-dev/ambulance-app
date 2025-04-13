@@ -4,10 +4,16 @@ from models import db, User, Driver, Hospital, Ambulance, AmbulanceRequest, Ride
 from flask_migrate import Migrate
 from datetime import datetime
 from functools import wraps
+from flask_jwt_extended import JWTManager
+from auth import auth_bp
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///ambulance.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+jwt = JWTManager(app)
+
+app.register_blueprint(auth_bp, url_prefix='/auth')
 
 CORS(app)
 db.init_app(app)

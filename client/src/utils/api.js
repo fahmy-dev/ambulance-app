@@ -1,5 +1,6 @@
 
-const API_URL = import.meta.env.VITE_API_URL || "";
+// Change this line to always use the local URL
+const API_URL = "http://localhost:5000";
 
 async function fetchApi(endpoint, options = {}) {
   const url = `${API_URL}${endpoint}`;

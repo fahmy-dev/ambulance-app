@@ -50,7 +50,7 @@ function ContactUs() {
       console.log("Sending contact data:", contactData);
       
       // Send data to the server using fetch directly to debug
-      const response = await fetch("http://localhost:5000/contact_us", {
+      const response = await fetch("http://localhost:8000/contact_us", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

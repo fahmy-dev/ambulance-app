@@ -326,19 +326,26 @@ def request_ambulance():
         return jsonify({"error": str(e)}), 500
 
 # Update the app.run configuration
-@app.route('/')
-def serve():
-    return send_from_directory('../client/dist', 'index.html')
+# Change the database configuration to always use SQLite
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///ambulance.db'
 
-@app.route('/<path:path>')
-def serve_static(path):
-    if path != "" and os.path.exists("../client/dist/" + path):
-        return send_from_directory('../client/dist', path)
-    else:
-        return send_from_directory('../client/dist', 'index.html')
+# Remove the production-specific route handlers
+# Keep only the API routes and remove the static file serving routes
+
+# Remove or comment out these routes:
+# @app.route('/')
+# def serve():
+#     return send_from_directory('../client/dist', 'index.html')
+
+# @app.route('/<path:path>')
+# def serve_static(path):
+#     if path != "" and os.path.exists("../client/dist/" + path):
+#         return send_from_directory('../client/dist', path)
+#     else:
+#         return send_from_directory('../client/dist', 'index.html')
 
 # Keep this at the bottom of the file
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8000, debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)
     # Remove the second app.run call
     # app.run(debug=True)

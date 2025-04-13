@@ -1,6 +1,6 @@
 
-// Use environment variable for API URL, fallback to empty string for production
-const API_URL = import.meta.env.VITE_API_URL || "";
+// Change this line to always use the local URL
+const API_URL = "http://localhost:5000";
 
 // Helper function for making API requests
 async function fetchApi(endpoint, options = {}) {

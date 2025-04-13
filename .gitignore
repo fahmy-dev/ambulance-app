@@ -175,5 +175,4 @@ cython_debug/
 
 # Project specific ignores
 instance/
-migrations/
 node_modules/

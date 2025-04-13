@@ -7,8 +7,12 @@ function Navbar() {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    logout();
-    navigate("/home");
+    const isConfirmed = window.confirm("Are you sure you want to logout?");
+    if (isConfirmed) {
+      logout();
+      navigate("/home");
+      alert("You have successfully logged out.");
+    }
   };
 
   return (
@@ -25,7 +29,6 @@ function Navbar() {
         <div className="auth-buttons">
           {user ? (
             <>
-              {/* Change this line to display user.name instead of the entire user object */}
               <p>Welcome, {user.name}</p>
               <button onClick={handleLogout} className="logout-btn">Logout</button>
             </>

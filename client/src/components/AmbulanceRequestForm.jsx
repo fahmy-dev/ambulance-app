@@ -294,7 +294,18 @@ function AmbulanceRequestForm({ position, onRequestSubmit, onHospitalSelect }) {
     <div 
       key={hospital.id || hospital.hospital_name} 
       className={`hospital-item ${selectedHospital && (selectedHospital.id === hospital.id || selectedHospital.name === hospital.hospital_name) ? 'selected' : ''}`}
-      onClick={() => handleHospitalSelect(hospital)}
+      onClick={() => {
+        // Create a complete hospital object from favorite if needed
+        const completeHospital = {
+          ...hospital,
+          name: hospital.name || hospital.hospital_name,
+          id: hospital.id || `fav-${hospital.hospital_name}`,
+          // Add default values for required fields if they don't exist
+          type: hospital.type || 'hospital',
+          distance: hospital.distance || '0'
+        };
+        handleHospitalSelect(completeHospital);
+      }}
     >
       <div className="hospital-info">
         <span 

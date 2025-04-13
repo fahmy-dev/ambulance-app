@@ -257,7 +257,10 @@ def remove_favorite():
     user_id = get_jwt_identity()
 
     # Find the favorite to be removed
-    favorite_to_remove = Favorite.query.filter_by(user_id=user_id, hospital_name=data['hospital_name']).first()
+    favorite_to_remove = Favorite.query.filter_by(
+        user_id=user_id, 
+        hospital_name=data['hospital_name']
+    ).first()
 
     if not favorite_to_remove:
         return jsonify({"error": "Hospital not found in favorites"}), 404

@@ -358,13 +358,10 @@ function AmbulanceRequestForm({ position, onRequestSubmit, onHospitalSelect }) {
       );
       
       if (isFavorite) {
-        const favoriteToRemove = favorites.find(fav => 
-          fav.hospital_name === (hospital.name || hospital.hospital_name)
-        );
-        await api.favorites.remove({ id: favoriteToRemove.id });
-        setFavorites(favorites.filter(fav => 
-          fav.hospital_name !== (hospital.name || hospital.hospital_name)
-        ));
+        // Find the hospital name to remove
+        const hospitalName = hospital.name || hospital.hospital_name;
+        await api.favorites.remove({ hospital_name: hospitalName });
+        setFavorites(favorites.filter(fav => fav.hospital_name !== hospitalName));
       } else {
         const response = await api.favorites.add({ 
           hospital_name: hospital.name || hospital.hospital_name 

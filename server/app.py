@@ -324,5 +324,18 @@ def request_ambulance():
         return jsonify({"error": str(e)}), 500
 
 # Update the app.run configuration
+@app.route('/')
+def serve():
+    return send_from_directory('../client/dist', 'index.html')
+
+@app.route('/<path:path>')
+def serve_static(path):
+    if path != "" and os.path.exists("../client/dist/" + path):
+        return send_from_directory('../client/dist', path)
+    else:
+        return send_from_directory('../client/dist', 'index.html')
+
+# Keep this at the bottom of the file
 if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=8000)
     app.run(debug=True)

@@ -18,7 +18,7 @@ app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)
 # Configure CORS to allow requests from your React app
 CORS(app, resources={
     r"/*": {
-        "origins": ["http://localhost:5173", "https://ambulance-app-b741.onrender.com"],
+        "origins": "*",  # Allow all origins temporarily for debugging
         "methods": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
         "allow_headers": ["Content-Type", "Authorization", "Accept"],
         "supports_credentials": True
@@ -31,6 +31,10 @@ app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)
 jwt = JWTManager(app)
 db.init_app(app)
 migrate = Migrate(app, db)
+
+# Add this to create tables if they don't exist
+with app.app_context():
+    db.create_all()
 
 # ---------------- VALIDATION DECORATOR ----------------
 def validate_json(required_fields=None, optional_fields=None):

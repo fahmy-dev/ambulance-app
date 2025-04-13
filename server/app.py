@@ -283,8 +283,8 @@ def contact_us():
     contact_message = ContactUs(
         name=data['name'],
         email=data['email'],
-        phone_number=data['phone_number'],
-        message=data['message']  
+        phone_number=data.get('phone_number', ''),
+        message=data['message']
     )
     
     try:

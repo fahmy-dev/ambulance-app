@@ -1,16 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
-import L from 'leaflet';  // Add this import
+import L from 'leaflet';
 import "leaflet/dist/leaflet.css";
 import { useMapEvents } from "react-leaflet";
 import AmbulanceRequestForm from "../components/AmbulanceRequestForm";
 import RequestConfirmationPanel from "../components/RequestConfirmationPanel";
 import api from "../utils/api";
-import { useAuth } from "../context/AuthContext"; // Add this import
+import { useAuth } from "../context/AuthContext";
 
-// Component to handle location updates
-// Add this before your components
-// Fix for default marker icons
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
@@ -18,7 +15,6 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
-// Create custom icons for different marker types
 const hospitalIcon = new L.Icon({
   iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
@@ -37,7 +33,6 @@ function LocationMarker({ position, setPosition, selectedHospital }) {
     }
   }, [position, map]);
   
-  // Add effect to handle selected hospital position changes
   useEffect(() => {
     if (selectedHospital && selectedHospital.position) {
       map.flyTo(selectedHospital.position, 15);
@@ -73,14 +68,12 @@ function Home() {
   const [requestData, setRequestData] = useState(null);
   const [selectedHospital, setSelectedHospital] = useState(null);
   const [locationError, setLocationError] = useState(null);
-  const defaultPosition = [-1.286389, 36.817223]; // Nairobi coordinates
-  const { user } = useAuth(); // Add this to check if user is logged in
+  const defaultPosition = [-1.286389, 36.817223];
+  const { user } = useAuth();
 
   useEffect(() => {
-    // Immediately set default position to ensure map always loads
     setPosition(defaultPosition);
     
-    // Reduce initial loading time
     setTimeout(() => {
       if (loading) {
         setLoading(false);
@@ -89,16 +82,13 @@ function Home() {
     
     if (navigator.geolocation) {
       try {
-        // Try to get precise location with a timeout
         const locationTimeout = setTimeout(() => {
           if (loading) {
-            console.log("Location request timed out, using default position");
             setLoading(false);
             setLocationError("Location request timed out. Using default location.");
           }
         }, 5000);
         
-        // Use watchPosition instead of getCurrentPosition for better reliability
         const watchId = navigator.geolocation.watchPosition(
           (position) => {
             clearTimeout(locationTimeout);
@@ -106,36 +96,30 @@ function Home() {
             setLoading(false);
             setLocationError(null);
             
-            // Once we get a good position, stop watching
             navigator.geolocation.clearWatch(watchId);
           },
           (error) => {
             clearTimeout(locationTimeout);
-            console.error("Error getting location:", error);
             setLocationError("Could not access your location. Using default location instead.");
             setLoading(false);
           },
           { 
-            enableHighAccuracy: false, // Set to false for better compatibility
+            enableHighAccuracy: false,
             timeout: 10000,
-            maximumAge: 300000 // Allow cached positions up to 5 minutes old
+            maximumAge: 300000
           }
         );
         
-        // Clean up the watch when component unmounts
         return () => {
           navigator.geolocation.clearWatch(watchId);
           clearTimeout(locationTimeout);
         };
       } catch (e) {
-        // Handle any unexpected errors in the geolocation API
-        console.error("Unexpected geolocation error:", e);
         setLocationError("An unexpected error occurred. Using default location.");
         setLoading(false);
       }
     } else {
       setLocationError("Geolocation is not supported by your browser. Using default location.");
-      console.error("Geolocation is not supported by this browser");
       setLoading(false);
     }
   }, []);

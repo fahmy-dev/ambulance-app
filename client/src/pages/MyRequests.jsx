@@ -14,13 +14,7 @@ function MyRequests() {
   
       try {
         setLoading(true);
-        // Fetch the requests for the current user
         const response = await api.requests.getAll();
-        
-        // Log the response to check its structure
-        console.log(response);
-  
-        // The server returns the array directly, not wrapped in a data property
         setMyRequests(response);
       } catch (err) {
         console.error("Failed to fetch requests:", err);
@@ -33,7 +27,6 @@ function MyRequests() {
     fetchRequests();
   }, [user]);
   
-  // Format date function (in case the server doesn't provide formatted_date)
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
     
@@ -87,14 +80,16 @@ function MyRequests() {
               <tr key={req.id}>
                 <td>{req.id}</td>
                 <td>{req.hospital_name}</td>
-                <td>{req.payment_method || "N/A"}</td>
+                <td>{req.payment_method}</td>
                 <td>{req.formatted_date || formatDate(req.date)}</td>
               </tr>
             ))}
           </tbody>
         </table>
       ) : (
-        <p className="no-requests">You haven't made any requests yet.</p>
+        <div className="no-requests">
+          You haven't made any ambulance requests yet.
+        </div>
       )}
     </div>
   );

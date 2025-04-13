@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
-import api from "../utils/api"; // Import the updated API utility
+import api from "../utils/api";
 
 function ContactUs() {
   const [submitSuccess, setSubmitSuccess] = useState(false);
@@ -46,7 +46,6 @@ function ContactUs() {
         message: values.message
       };
       
-      // Use the api utility instead of direct fetch
       await api.contactUs.create(contactData);
       
       setSubmitSuccess(true);

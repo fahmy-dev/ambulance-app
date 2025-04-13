@@ -1,6 +1,6 @@
 
-// Update API_URL to use environment variable
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+// Update the API_URL to use relative paths in production
+const API_URL = "";  // Empty string for same-origin requests
 
 // Helper function for making API requests
 async function fetchApi(endpoint, options = {}) {

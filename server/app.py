@@ -18,7 +18,7 @@ app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)
 # Configure CORS to allow requests from your React app
 CORS(app, resources={
     r"/*": {
-        "origins": ["http://localhost:5173"],
+        "origins": ["http://localhost:5173", "https://ambulance-app-b741.onrender.com"],
         "methods": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
         "allow_headers": ["Content-Type", "Authorization", "Accept"],
         "supports_credentials": True
@@ -65,9 +65,10 @@ def handle_general_error(error):
         return jsonify({"error": "Database error", "details": str(error)}), 500
     return jsonify({"error": "An unexpected error occurred", "details": str(error)}), 500
 
-@app.route('/')
-def index():
-    return {"message": "Ambulance API is running!"}
+# Remove this route as it conflicts with the frontend serving route
+# @app.route('/')
+# def index():
+#     return {"message": "Ambulance API is running!"}
 
 # --------------------- USER ROUTES ---------------------
 @app.route('/users', methods=['POST'])
@@ -337,5 +338,6 @@ def serve_static(path):
 
 # Keep this at the bottom of the file
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8000)
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=8000, debug=True)
+    # Remove the second app.run call
+    # app.run(debug=True)

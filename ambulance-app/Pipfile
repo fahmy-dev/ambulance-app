@@ -1,0 +1,30 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+flask = "*"
+flask-sqlalchemy = "*"
+flask-migrate = "*"
+flask-cors = "*"
+sqlalchemy = "*"
+werkzeug = "*"
+psycopg2-binary = "*"
+python-dotenv = "*"
+sqlalchemy-serializer = "*"
+
+[dev-packages]
+pytest = "*"
+flake8 = "*"
+
+[requires]
+python_version = "3.8"
+
+[scripts]
+start = "flask run"
+db-init = "flask db init"
+db-migrate = "flask db migrate"
+db-upgrade = "flask db upgrade"
+test = "pytest"
+lint = "flake8"

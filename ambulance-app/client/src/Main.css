@@ -1,0 +1,495 @@
+/* Global Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Arial', sans-serif;
+}
+
+body {
+  background-color: #f4f4f4;
+  color: #333;
+  min-height: 100vh;
+  display: block;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Layout Containers */
+.home, .page-container, .my-requests-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.contact-page, .auth-page {
+  max-width: 600px;
+  margin: 20px auto;
+  padding: 30px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.auth-page {
+  max-width: 500px;
+}
+
+/* Typography */
+h1, .page-title, .contact-title {
+  text-align: center;
+  font-size: 2.5rem;
+  margin: 20px 0;
+  font-weight: 600;
+}
+
+.page-subtitle, .contact-subtitle {
+  text-align: center;
+  color: #666;
+  margin-bottom: 30px;
+}
+
+/* Navbar */
+nav {
+  width: 100%;
+  padding: 20px 0;
+  background-color: #fff;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+nav .container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 80%;
+  margin: 0 auto;
+}
+
+nav .logo {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+nav .nav-links {
+  display: flex;
+  gap: 20px;
+}
+
+nav .auth-buttons {
+  display: flex;
+  gap: 15px;
+}
+
+/* Buttons */
+button, .submit-btn, .request-btn, .sign-in-btn, .view-requests-btn {
+  padding: 10px 20px;
+  border-radius: 5px;
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+button {
+  font-size: 14px;
+  background-color: #007bff;
+}
+
+button:hover {
+  background-color: #0056b3;
+}
+
+.submit-btn, .sign-in-btn, .request-btn, .view-requests-btn {
+  width: 100%;
+  padding: 12px;
+  font-weight: bold;
+  margin-top: 15px;
+}
+
+.submit-btn, .sign-in-btn, .view-requests-btn {
+  background-color: #333;
+}
+
+.submit-btn:hover, .sign-in-btn:hover, .view-requests-btn:hover {
+  background-color: #555;
+}
+
+.request-btn {
+  background-color: #e53935;
+  font-size: 16px;
+}
+
+.request-btn:hover {
+  background-color: #c62828;
+}
+
+.request-btn:disabled {
+  background-color: #f5a5a1;
+  cursor: not-allowed;
+}
+
+/* Forms */
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+input, select, textarea {
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  width: 100%;
+}
+
+textarea {
+  height: 150px;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Home Page */
+.main-content {
+  display: flex;
+  gap: 30px;
+  margin: 30px auto;
+}
+
+.map-area {
+  flex: 2;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.map-placeholder {
+  width: 100%;
+  min-height: 500px;
+  background-color: #eee;
+}
+
+.loading-map {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 500px;
+  color: #666;
+}
+
+.request-panel {
+  flex: 1;
+  background-color: #fff;
+  padding: 25px;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.request-panel h2 {
+  font-size: 1.5rem;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+/* Hospital items */
+.hospitals-container {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.favourite-hospitals {
+  margin: 15px 0;
+}
+
+.favourite-hospitals h3 {
+  font-size: 16px;
+  font-weight: 500;
+  color: #555;
+  margin-bottom: 8px;
+}
+
+.hospital-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.hospital-item:hover {
+  background-color: #f8f9fa;
+}
+
+.hospital-item.selected {
+  background-color: #f0f7ff;
+  border-left: 3px solid #007bff;
+}
+
+.hospital-info {
+  display: flex;
+  align-items: center;
+}
+
+.star-icon {
+  color: #ccc;
+  margin-right: 10px;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.star-icon:hover {
+  color: #ffd700;
+}
+
+.star-icon.favorite {
+  color: #ffd700;
+}
+
+.hospital-distance {
+  font-size: 14px;
+  color: #666;
+}
+
+.no-favorites {
+  color: #888;
+  font-style: italic;
+  padding: 10px 0;
+}
+
+/* AmbulanceRequestForm Styles */
+.search-input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 16px;
+  outline: none;
+  transition: border-color 0.2s;
+  margin-bottom: 10px;
+}
+
+.search-input:focus {
+  border-color: #007bff;
+}
+
+.loading-hospitals {
+  padding: 10px;
+  text-align: center;
+  color: #666;
+  font-style: italic;
+}
+
+.search-results {
+  background-color: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  max-height: 200px;
+  overflow-y: auto;
+  margin-bottom: 15px;
+}
+
+.search-results .hospital-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.search-results .hospital-item:last-child {
+  border-bottom: none;
+}
+
+/* My Requests Table */
+.requests-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 30px;
+  background-color: #fff;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.requests-table th {
+  background-color: #f8f8f8;
+  padding: 15px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+  font-weight: 600;
+}
+
+.requests-table td {
+  padding: 15px;
+  border-bottom: 1px solid #eee;
+}
+
+.status-pending, .status-done {
+  display: inline-flex;
+  align-items: center;
+}
+
+.status-pending::before {
+  content: "";
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: #f0ad4e;
+  margin-right: 8px;
+}
+
+.status-done::before {
+  content: "✓";
+  color: #5cb85c;
+  font-weight: bold;
+  margin-right: 8px;
+}
+
+/* Auth Page */
+.auth-tabs {
+  display: flex;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.auth-tab {
+  padding: 10px 20px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+}
+
+.auth-tab.active {
+  border-bottom: 2px solid #333;
+  font-weight: 500;
+}
+
+.forgot-password {
+  display: block;
+  text-align: left;
+  margin-top: 15px;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+/* Request Confirmation Styles */
+.request-confirmation {
+  background-color: white;
+  border-radius: 8px;
+  padding: 24px;
+  text-align: center;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.confirmation-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.confirmation-icon {
+  display: inline-block;
+  width: 48px;
+  height: 48px;
+  background-color: #4CAF50;
+  color: white;
+  border-radius: 50%;
+  line-height: 48px;
+  font-size: 24px;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.confirmation-header h2 {
+  color: #333;
+  margin-bottom: 8px;
+  font-size: 24px;
+}
+
+.confirmation-header p {
+  color: #666;
+}
+
+.confirmation-details {
+  text-align: left;
+  margin: 24px 0;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.detail-row:last-child {
+  border-bottom: none;
+}
+
+.detail-label {
+  color: #666;
+  font-weight: 500;
+}
+
+.detail-value {
+  color: #333;
+  font-weight: 600;
+}
+
+/* Footer */
+.app-footer {
+  text-align: center;
+  padding: 20px;
+  margin-top: 50px;
+  border-top: 1px solid #eee;
+}
+
+.social-icons {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 10px;
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+  .main-content {
+    flex-direction: column;
+  }
+  
+  nav .container {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  nav .nav-links {
+    flex-direction: column;
+    gap: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  h1, .page-title, .contact-title {
+    font-size: 2rem;
+  }
+  
+  .request-panel h2 {
+    font-size: 1.2rem;
+  }
+  
+  .map-placeholder {
+    min-height: 250px;
+  }
+}
+
